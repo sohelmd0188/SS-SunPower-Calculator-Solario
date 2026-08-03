@@ -20,32 +20,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Clear Visibility & Universal Contrast
+# Custom CSS for Clear Visibility & Universal Day/Night Contrast
 st.markdown("""
 <style>
-.main { background-color: #F8FAFC; }
-
-/* Enhanced Metric Box Styling with Better Padding & Clear Text */
+/* Enhanced Metric Box Styling with High Contrast Day/Night Support */
 div[data-testid="stMetric"] {
-    background-color: #FFFFFF !important;
+    background-color: #1E293B !important;  /* Dark Slate Blue background for clear contrast in both modes */
     border-radius: 12px;
     padding: 15px 18px !important;
-    box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.08);
-    border-left: 6px solid #F59E0B;
+    box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.3);
+    border-left: 6px solid #F59E0B !important;
     min-height: 95px;
 }
 
 div[data-testid="stMetricLabel"] {
     font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    color: #475569 !important;
+    font-weight: 700 !important;
+    color: #CBD5E1 !important;  /* Soft light grey title text for maximum readability */
     white-space: nowrap !important;
 }
 
 div[data-testid="stMetricValue"] {
     font-size: 1.45rem !important;
     font-weight: 800 !important;
-    color: #0F172A !important;
+    color: #FFFFFF !important;  /* Pure white crisp text for numbers */
     word-break: normal !important;
     white-space: nowrap !important;
 }
@@ -66,7 +64,7 @@ div[data-testid="stMetricValue"] {
 
 /* Universal Hero Banner */
 .hero-container {
-    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
+    background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.90)), 
                 url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=1200&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
@@ -117,7 +115,7 @@ if lang == "English":
     st.markdown("""
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
-        <div class="hero-title">Smart Commercial Solar Calculator & Dashboard (Solario)</div>
+        <div class="hero-title">Smart Commercial Solar Calculator & Dashboard</div>
         <div class="hero-subtitle">Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.</div>
     </div>
     """, unsafe_allow_html=True)
@@ -290,7 +288,7 @@ yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 
 # ==========================================
-# 5. Main Dashboard Rendering Metrics (Clean 4-Column Layout)
+# 5. Main Dashboard Rendering Metrics (Clean 4-Column Layout with Dark Contrast)
 # ==========================================
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load" if lang == "English" else "চলমান লোড", f"{running_watts} W")
@@ -513,7 +511,7 @@ df_solar = pd.DataFrame({'Time': [f"{h:02d}:00" for h in hours], 'Generation (kW
 fig = px.area(df_solar, x='Time', y='Generation (kW)', 
               title=f"Estimated Daily Solar Generation Curve ({solar_kwp:.2f} kWp System)" if lang == "English" else f"দৈনিক আনুমানিক বিদ্যুৎ উৎপাদন গ্রাফ ({solar_kwp:.2f} kWp System)",
               color_discrete_sequence=['#F59E0B'])
-fig.update_layout(template="plotly_white", hovermode="x unified")
+fig.update_layout(template="plotly_dark", hovermode="x unified")
 st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
@@ -590,7 +588,7 @@ else:
 st.markdown("---")
 st.markdown(
     """
-    <div style="text-align: center; color: #64748B; padding: 10px;">
+    <div style="text-align: center; color: #94A3B8; padding: 10px;">
         Designed by <b>Mohammad Sohel</b>
     </div>
     """,
