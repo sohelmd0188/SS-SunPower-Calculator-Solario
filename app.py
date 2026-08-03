@@ -6,6 +6,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+import pydeck as pdk
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -63,7 +64,6 @@ API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
 # ==========================================
 # 2. Header Section & Multi-language Option
 # ==========================================
-# Language Switcher
 lang = st.radio("🌐 Language / ভাষা:", ["English", "বাংলা"], horizontal=True)
 
 if lang == "English":
@@ -110,7 +110,6 @@ if "With Battery" in system_type:
     battery_type = st.sidebar.selectbox("Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
                                         ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"])
 
-# Brand-based pricing multipliers
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
 
 # ==========================================
@@ -119,7 +118,7 @@ brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand
 st.sidebar.markdown("---")
 st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
 roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
-max_possible_kwp = (roof_sqft / 100) * 1.0  # Approx 100 sqft per 1kWp
+max_possible_kwp = (roof_sqft / 100) * 1.0
 
 # ==========================================
 # 5. Backend Calculations & ROI Logic
@@ -136,7 +135,6 @@ inverter_kva = (surge_watts * 1.25) / 1000
 solar_kwp = (daily_wh / 4.0 / 0.85) / 1000
 panels_count = math.ceil((solar_kwp * 1000) / 550) if solar_kwp > 0 else 0
 
-# Cost Calculation with Brand Pricing
 panel_unit_price = 28 * brand_multiplier if "Tier-1" in panel_brand else 25
 panel_cost = (panels_count * 550) * panel_unit_price
 
@@ -161,8 +159,7 @@ subtotal = panel_cost + inverter_cost + battery_cost
 installation_cost = subtotal * 0.10
 total_cost = subtotal + installation_cost
 
-# Financial ROI Calculations
-electricity_rate = 9.5  # Average BDT per kWh unit in Bangladesh
+electricity_rate = 9.5
 monthly_savings = daily_kwh * 30 * electricity_rate
 yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
@@ -178,14 +175,12 @@ col4.metric("Total Budget" if lang == "English" else "মোট বাজেট"
 
 st.markdown("---")
 
-# Roof Fitting Alert
 if solar_kwp > max_possible_kwp:
     if lang == "English":
         st.warning(f"⚠️ **Roof Space Notice:** Your required system ({solar_kwp:.2f} kWp) needs ~{solar_kwp*100:.0f} Sq. Ft. Your roof is {roof_sqft} Sq. Ft (Max capacity: ~{max_possible_kwp:.2f} kWp).")
     else:
         st.warning(f"⚠️ **ছাদের জায়গার সতর্কতা:** আপনার প্রয়োজনীয় সিস্টেমের ({solar_kwp:.2f} kWp) জন্য অন্তত ~{solar_kwp*100:.0f} বর্গফুট ছাদ প্রয়োজন। আপনার দেওয়া ছাদের ক্ষেত্রফল {roof_sqft} বর্গফুট (সর্বোচ্চ ক্ষমতা: ~{max_possible_kwp:.2f} kWp)।")
 
-# Hardware Specs & Cost Summary
 c1, c2 = st.columns(2)
 with c1:
     st.subheader("📋 System Specifications & Brands" if lang == "English" else "📋 যন্ত্রপাতির বিবরণ ও ব্র্যান্ড")
@@ -208,59 +203,112 @@ with c2:
     st.write(f"📈 **Estimated Payback Period (ROI):** ~**{payback_years:.1f} Years**" if lang == "English" else f"📈 **মূল্য ফেরত আসার আনুমানিক সময় (ROI):** ~**{payback_years:.1f} বছর**")
 
 st.markdown("---")
-if lang == "English":
-    st.success(f"### 🎯 Total Estimated System Cost: BDT {total_cost:,.0f}")
-else:
-    st.success(f"### 🎯 মোট আনুমানিক প্রজেক্ট খরচ: BDT {total_cost:,.0f}")
-st.markdown("---")
 
 # ==========================================
-# 7. Auto CAD Solar Panel Layout Simulation
+# 7. CAD & Solar Layout Options (Levels 1, 2, 3)
 # ==========================================
-st.subheader("📐 Auto CAD Solar Panel Layout Simulation" if lang == "English" else "📐 অটোমেটিক সোলার লেআউট ক্যাড ডিজাইন")
+st.subheader("📐 Auto Solar CAD & Layout Simulation" if lang == "English" else "📐 অটোমেটিক সোলার ক্যাড ও লেআউট ডিজাইন")
+
+cad_mode = st.radio(
+    "Choose Design View Level:" if lang == "English" else "ডিজাইন ভিউ বেছে নিন:",
+    ["Level 1: 2D Blueprint (Matplotlib)", "Level 2: 3D Interactive Model (Pydeck)", "Level 3: Satellite Location Solar Layout"],
+    horizontal=True
+)
 
 if panels_count > 0 and roof_sqft > 0:
-    # Estimate standard roof dimension (width x length in ft)
     roof_w = np.sqrt(roof_sqft * 1.5)
     roof_l = roof_sqft / roof_w
-
-    p_w, p_l = 3.5, 6.5 # Approx 550W panel size in feet
-
-    cols = int(roof_w // (p_w + 0.5))
-    if cols < 1: cols = 1
+    p_w, p_l = 3.5, 6.5
+    cols = max(1, int(roof_w // (p_w + 0.5)))
     rows = int(np.ceil(panels_count / cols))
 
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    roof_rect = patches.Rectangle((0, 0), roof_w, roof_l, linewidth=2, edgecolor='#1E293B', facecolor='#F1F5F9', linestyle='--')
-    ax.add_patch(roof_rect)
-    ax.text(roof_w/2, -1.8, f"Roof Width: {roof_w:.1f} ft", ha='center', fontsize=9, color='#475569')
-    ax.text(-1.8, roof_l/2, f"Roof Length: {roof_l:.1f} ft", va='center', rotation='vertical', fontsize=9, color='#475569')
+    # --- LEVEL 1: Fixed 2D Blueprint ---
+    if "Level 1" in cad_mode:
+        fig, ax = plt.subplots(figsize=(8, 4.5), facecolor='#0F172A')
+        ax.set_facecolor('#0F172A')
+        
+        roof_rect = patches.Rectangle((0, 0), roof_w, roof_l, linewidth=2, edgecolor='#F59E0B', facecolor='#1E293B', linestyle='--')
+        ax.add_patch(roof_rect)
+        
+        ax.text(roof_w/2, -1.8, f"Roof Width: {roof_w:.1f} ft", ha='center', fontsize=9, color='#F8FAFC')
+        ax.text(-1.8, roof_l/2, f"Roof Length: {roof_l:.1f} ft", va='center', rotation='vertical', fontsize=9, color='#F8FAFC')
 
-    placed = 0
-    start_x, start_y = 1.0, 1.0
+        placed = 0
+        start_x, start_y = 1.0, 1.0
 
-    for r in range(rows):
-        for c in range(cols):
-            if placed < panels_count:
-                x = start_x + c * (p_w + 0.5)
-                y = start_y + r * (p_l + 0.5)
-                
-                if (x + p_w <= roof_w) and (y + p_l <= roof_l):
-                    panel_patch = patches.Rectangle((x, y), p_w, p_l, linewidth=1, edgecolor='#0284C7', facecolor='#0284C7', alpha=0.75)
-                    ax.add_patch(panel_patch)
-                    ax.plot([x, x+p_w], [y+p_l/2, y+p_l/2], color='white', linewidth=0.5)
-                    ax.plot([x+p_w/2, x+p_w/2], [y, y+p_l], color='white', linewidth=0.5)
+        for r in range(rows):
+            for c in range(cols):
+                if placed < panels_count:
+                    x = start_x + c * (p_w + 0.5)
+                    y = start_y + r * (p_l + 0.5)
+                    if (x + p_w <= roof_w) and (y + p_l <= roof_l):
+                        panel_patch = patches.Rectangle((x, y), p_w, p_l, linewidth=1, edgecolor='#38BDF8', facecolor='#0284C7', alpha=0.85)
+                        ax.add_patch(panel_patch)
+                        ax.plot([x, x+p_w], [y+p_l/2, y+p_l/2], color='#E0F2FE', linewidth=0.5)
+                        ax.plot([x+p_w/2, x+p_w/2], [y, y+p_l], color='#E0F2FE', linewidth=0.5)
+                        placed += 1
+
+        ax.set_xlim(-4, roof_w + 4)
+        ax.set_ylim(-4, roof_l + 4)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        title_text = f"2D Blueprint: {placed} Panels Placed ({panels_count} Required)" if lang == "English" else f"২ডি ব্লুপ্রিন্ট: {placed}টি প্যানেল ছাদে বসানো হয়েছে (প্রয়োজন {panels_count}টি)"
+        plt.title(title_text, fontsize=10, fontweight='bold', color='#F8FAFC', pad=10)
+        st.pyplot(fig, use_container_width=True)
+
+    # --- LEVEL 2: 3D Interactive Model ---
+    elif "Level 2" in cad_mode:
+        st.caption("🖱️ *Use your mouse to rotate (Ctrl+Drag), zoom, and inspect the 3D roof structure.*" if lang == "English" else "🖱️ *মাউস দিয়ে ঘুরিয়ে (Ctrl+Drag) ও জুম করে ৩ডি মডেলটি দেখুন।*")
+        
+        # 3D Coordinates Generation
+        base_lat, base_lon = 23.8103, 90.4125
+        building_data = [{
+            "coordinates": [
+                [base_lon - 0.0001, base_lat - 0.0001],
+                [base_lon + 0.0001, base_lat - 0.0001],
+                [base_lon + 0.0001, base_lat + 0.0001],
+                [base_lon - 0.0001, base_lat + 0.0001]
+            ],
+            "height": 15,
+            "fill_color": [30, 41, 59, 200]
+        }]
+        
+        panel_data = []
+        placed = 0
+        for r in range(rows):
+            for c in range(cols):
+                if placed < panels_count:
+                    offset_x = (c - cols/2) * 0.00002
+                    offset_y = (r - rows/2) * 0.00002
+                    panel_data.append({
+                        "coordinates": [
+                            [base_lon + offset_x, base_lat + offset_y],
+                            [base_lon + offset_x + 0.000015, base_lat + offset_y],
+                            [base_lon + offset_x + 0.000015, base_lat + offset_y + 0.000015],
+                            [base_lon + offset_x, base_lat + offset_y + 0.000015]
+                        ],
+                        "height": 15.8,
+                        "fill_color": [2, 132, 199, 255]
+                    })
                     placed += 1
 
-    ax.set_xlim(-4, roof_w + 4)
-    ax.set_ylim(-4, roof_l + 4)
-    ax.set_aspect('equal')
-    ax.axis('off')
-    title_text = f"CAD Layout: {placed} Panels Placed on Roof ({panels_count} Required)" if lang == "English" else f"ক্যাড লেআউট: ছাদ অনুযায়ী {placed}টি প্যানেল বসানো হয়েছে (প্রয়োজন {panels_count}টি)"
-    plt.title(title_text, fontsize=10, fontweight='bold', pad=10)
-    st.pyplot(fig)
-else:
-    st.info("No panels or roof space specified for CAD layout.")
+        roof_layer = pdk.Layer("PolygonLayer", building_data, get_polygon="coordinates", get_elevation="height", get_fill_color="fill_color", extruded=True)
+        panels_layer = pdk.Layer("PolygonLayer", panel_data, get_polygon="coordinates", get_elevation="height", get_fill_color="fill_color", extruded=True)
+
+        view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
+        st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state, tooltip={"text": "Roof & Solar Panel Array"}))
+
+    # --- LEVEL 3: Satellite Map Solar Layout ---
+    elif "Level 3" in cad_mode:
+        st.info("🛰️ **Satellite Location View:** Simulating solar array layout over satellite roof view." if lang == "English" else "🛰️ **স্যাটেলাইট লোকেশন ভিউ:** উপগ্রহ ম্যাপের ওপর সোলার প্যানেল বসানোর অনুকরণ।")
+        
+        satellite_data = pd.DataFrame({
+            'lat': [23.8103 + (i * 0.00001) for i in range(panels_count)],
+            'lon': [90.4125 + (i * 0.00001) for i in range(panels_count)]
+        })
+        
+        st.map(satellite_data, zoom=18, size=15)
+        st.success(f"📍 **Mapped {panels_count} Solar Panels onto real coordinates.**" if lang == "English" else f"📍 **বাস্তব স্যাটেলাইট ম্যাপে {panels_count}টি প্যানেল নির্দেশিত হয়েছে।**")
 
 st.markdown("---")
 
