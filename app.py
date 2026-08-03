@@ -7,6 +7,12 @@ import math
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
 # ==========================================
+st.set_page_config(
+    page_title="Smart Solar Dashboard & Calculator",
+    page_icon="☀️",
+    layout="wide"
+)
+
 # Custom CSS for Modern UI
 st.markdown("""
 <style>
@@ -40,35 +46,6 @@ div[data-testid="stMetric"] * {
     color: white;
 }
 </style>
-""", unsafe_allow_html=True).stButton>button {
-    width: 100%;
-    background-color: #F59E0B;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    padding: 10px;
-}
-.stButton>button:hover {
-    background-color: #D97706;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
-    .stButton>button {
-        width: 100%;
-        background-color: #F59E0B;
-        color: white;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        padding: 10px;
-    }
-    .stButton>button:hover {
-        background-color: #D97706;
-        color: white;
-    }
-    </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
@@ -76,7 +53,6 @@ div[data-testid="stMetric"] * {
 # ==========================================
 st.title("☀️ Smart All-in-One Solar App")
 st.caption("Calculate household solar load, estimated budget, 24-hour generation curve, and real-time weather-based solar tracking.")
-
 st.markdown("---")
 
 # ==========================================
@@ -119,7 +95,6 @@ surge_watts = (fan_qty * 75) + (light_qty * 15) + (tv_qty * 80) + (oven_qty * 12
 daily_wh = (fan_qty * 75 * fan_hours) + (light_qty * 15 * light_hours) + \
            (fridge_qty * 200 * 12) + (tv_qty * 80 * tv_hours) + \
            (oven_qty * 1200 * oven_hours) + (pump_qty * 750 * pump_hours)
-
 daily_kwh = daily_wh / 1000
 
 # Required Inverter, Solar Panel & Battery Capacity
@@ -130,7 +105,6 @@ battery_ah = (daily_wh * 0.5) / (48 * 0.8) if "With Battery" in system_type else
 
 # Cost Estimation (BDT)
 panel_cost = (panels_count * 550) * 26
-
 if inverter_kva <= 3.5:
     inverter_cost = 45000
 elif inverter_kva <= 5.5:
@@ -146,7 +120,6 @@ total_cost = subtotal + installation_cost
 # ==========================================
 # 5. Main Dashboard Rendering
 # ==========================================
-
 # Top Summary Metrics
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load", f"{running_watts} W")
@@ -158,7 +131,6 @@ st.markdown("---")
 
 # Two-Column Layout: Hardware Specs & Cost Summary
 c1, c2 = st.columns(2)
-
 with c1:
     st.subheader("📋 Required System Specifications")
     st.info(f"⚡ **Recommended Inverter:** {max(3, round(inverter_kva))} KVA / KW (Hybrid 48V)")
@@ -175,28 +147,29 @@ with c2:
     if "With Battery" in system_type:
         st.write(f"• **Lithium Battery (48V):** BDT {battery_cost:,.0f}")
     st.write(f"• **Wiring, Mounting & Fitting:** BDT {installation_cost:,.0f}")
-    st.markdown("---")
-    st.success(f"### **Total Budget: BDT {total_cost:,.0f}**")
 
+st.markdown("---")
+st.success(f"### **Total Budget: BDT {total_cost:,.0f}**")
 st.markdown("---")
 
 # ==========================================
 # 6. 24-Hour Solar Generation Plotly Chart
 # ==========================================
 st.subheader("📊 24-Hour Solar Generation Simulation")
-
 hours = list(range(24))
 generation_curve = [0, 0, 0, 0, 0, 0, 0.1, 0.3, 0.6, 0.85, 0.95, 1.0, 0.98, 0.90, 0.75, 0.5, 0.2, 0.05, 0, 0, 0, 0, 0, 0]
 power_output = [solar_kwp * factor for factor in generation_curve]
 
-df_solar = pd.DataFrame({'Time': [f"{h:02d}:00" for h in hours], 'Generation (kW)': power_output})
+df_solar = pd.DataFrame({
+    'Time': [f"{h:02d}:00" for h in hours],
+    'Generation (kW)': power_output
+})
 
-fig = px.area(
-    df_solar, x='Time', y='Generation (kW)',
-    title=f"Estimated Daily Solar Power Curve ({solar_kwp:.2f} kWp System)",
-    labels={'Generation (kW)': 'Power Output (kW)', 'Time': 'Hour of Day'},
-    color_discrete_sequence=['#F59E0B']
-)
+fig = px.area(df_solar, x='Time', y='Generation (kW)', 
+              title=f"Estimated Daily Solar Power Curve ({solar_kwp:.2f} kWp System)",
+              labels={'Generation (kW)': 'Power Output (kW)', 'Time': 'Hour of Day'},
+              color_discrete_sequence=['#F59E0B']
+             )
 fig.update_layout(xaxis_title="Time of Day", yaxis_title="Power (kW)", hovermode="x unified", template="plotly_white")
 st.plotly_chart(fig, use_container_width=True)
 
@@ -206,7 +179,6 @@ st.markdown("---")
 # 7. Live Weather Solar Tracker Section
 # ==========================================
 st.subheader("🌦️ Live Weather-Based Solar Tracker")
-
 city = st.text_input("Enter City Name:", value="Dhaka")
 
 if st.button("Check Live Solar Output"):
@@ -230,10 +202,10 @@ if st.button("Check Live Solar Output"):
     if cloudiness is not None:
         efficiency = 1.0 - ((cloudiness / 100.0) * 0.80)
         current_kw = solar_kwp * efficiency
-
+        
         w1, w2, w3 = st.columns(3)
         w1.metric("Temperature", f"{temp} °C")
         w2.metric("Cloudiness", f"{cloudiness}%")
         w3.metric("Condition", weather_desc)
-
+        
         st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
