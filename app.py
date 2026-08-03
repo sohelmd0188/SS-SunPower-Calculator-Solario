@@ -14,7 +14,7 @@ from streamlit_folium import st_folium
 # 1. Page Configuration & Custom UI Styling
 # ==========================================
 st.set_page_config(
-    page_title="Smart Solar Dashboard & Calculator (Solario)",
+    page_title="Solario • Next-Gen Smart Solar CAD & ROI Engine",
     page_icon="☀️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -115,8 +115,8 @@ if lang == "English":
     st.markdown("""
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
-        <div class="hero-title">Smart Solar Calculator & Dashboard (Solario) </div>
-        <div class="hero-subtitle">Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.</div>
+        <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine </div>
+        <div class="hero-subtitle">Transform rooftops into clean energy powerhouses — Calculate solar load, 3D CAD, and live weather output.</div>
     </div>
     """, unsafe_allow_html=True)
 else:
