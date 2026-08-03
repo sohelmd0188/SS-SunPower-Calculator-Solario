@@ -138,39 +138,97 @@ st.markdown("---")
 # ==========================================
 # 3. Sidebar Inputs
 # ==========================================
-st.sidebar.header("🔌 1. Appliance Quantities" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ")
-fan_qty = st.sidebar.number_input("Ceiling Fan (75W)" if lang == "English" else "সিকেলিং ফ্যান (৭৫ ওয়াট)", min_value=0, value=5)
-light_qty = st.sidebar.number_input("LED Light (15W)" if lang == "English" else "এলইডি লাইট (১৫ ওয়াট)", min_value=0, value=10)
-fridge_qty = st.sidebar.number_input("Refrigerator (200W)" if lang == "English" else "রেফ্রিজারেটর/ফ্রিজ (২০০ ওয়াট)", min_value=0, value=1)
-tv_qty = st.sidebar.number_input("Smart TV (80W)" if lang == "English" else "স্মার্ট টিভি (৮০ ওয়াট)", min_value=0, value=1)
-oven_qty = st.sidebar.number_input("Oven (1200W)" if lang == "English" else "ওভেন (১২০০ ওয়াট)", min_value=0, value=1)
-pump_qty = st.sidebar.number_input("1 HP Submersible Pump (750W)" if lang == "English" else "১ এইচপি সাবমার্সিবল পাম্প (৭৫০ ওয়াট)", min_value=0, value=1)
+# ==========================================
+# Dynamic Appliance & Load Management System
+# ==========================================
 
-st.sidebar.markdown("---")
-st.sidebar.header("⏱️ 2. Daily Usage (Hours)" if lang == "English" else "⏱️ ২. দৈনিক ব্যবহার (ঘণ্টা)")
-fan_hours = st.sidebar.slider("Fan (Hours)" if lang == "English" else "ফ্যান (ঘণ্টা)", 0, 24, 10)
-light_hours = st.sidebar.slider("Light (Hours)" if lang == "English" else "লাইট (ঘণ্টা)", 0, 24, 8)
-fridge_hours = st.sidebar.slider("Refrigerator (Hours)" if lang == "English" else "ফ্রিজ (ঘণ্টা)", 0, 24, 24)
-tv_hours = st.sidebar.slider("TV (Hours)" if lang == "English" else "টিভি (ঘণ্টা)", 0, 24, 5)
-oven_hours = st.sidebar.slider("Oven (Minutes)" if lang == "English" else "ওভেন (মিনিট)", 0, 120, 30) / 60
-pump_hours = st.sidebar.slider("Pump (Hours)" if lang == "English" else "পাম্প (ঘণ্টা)", 0, 10, 1)
+# Initialize Default Appliances in Session State
+if "appliance_list" not in st.session_state:
+    st.session_state.appliance_list = {
+        "Ceiling Fan (75W)": {"watt": 75, "qty": 5},
+        "LED Light (15W)": {"watt": 15, "qty": 10},
+        "Refrigerator (200W)": {"watt": 200, "qty": 1},
+        "Smart TV (80W)": {"watt": 80, "qty": 1},
+        "Oven (1200W)": {"watt": 1200, "qty": 1},
+        "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1}
+    }
 
-st.sidebar.markdown("---")
-st.sidebar.header("⚙️ 3. Equipment & Brand Selection" if lang == "English" else "⚙️ ৩. যন্ত্রপাতি ও ব্র্যান্ড নির্বাচন")
+# Pre-defined extra appliances dictionary for Quick Selection
+EXTRA_APPLIANCES = {
+    "1.5 Ton Inverter AC (1500W)": 1500,
+    "1 Ton Non-Inverter AC (1200W)": 1200,
+    "2 Ton AC (2200W)": 2200,
+    "Washing Machine (500W)": 500,
+    "Geyser / Water Heater (2000W)": 2000,
+    "Microwave Oven (1000W)": 1000,
+    "Computer / Desktop (250W)": 250,
+    "Laptop Charger (65W)": 65,
+    "Iron Box (1000W)": 1000,
+    "Induction Cooker (1800W)": 1800
+}
 
-system_type = st.sidebar.radio("Select System Type:" if lang == "English" else "সিস্টেম টাইপ নির্বাচন করুন:", 
-                               ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"])
+with st.sidebar:
+    st.header("🔌 1. Appliance Quantities & Load")
 
-panel_brand = st.sidebar.selectbox("Solar Panel Brand:" if lang == "English" else "সোলার প্যানেল ব্র্যান্ড:", 
-                                  ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Canadian Solar", "Standard Brand"])
-inverter_brand = st.sidebar.selectbox("Inverter Brand:" if lang == "English" else "ইনভার্টার ব্র্যান্ড:", 
-                                     ["Growatt", "Deye", "Huawei", "Must / Standard"])
+    # --- Section A: Add New Extra Appliance Option ---
+    st.subheader("➕ Add Extra Appliance")
+    selected_extra = st.selectbox(
+        "Choose an Appliance to Add:",
+        options=list(EXTRA_APPLIANCES.keys()),
+        key="selected_extra_appliance"
+    )
 
-if "With Battery" in system_type:
-    battery_type = st.sidebar.selectbox("Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
-                                        ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"])
+    if st.button("➕ Add to Load List", use_container_width=True):
+        if selected_extra not in st.session_state.appliance_list:
+            watt_value = EXTRA_APPLIANCES[selected_extra]
+            # Add to main active appliance state
+            st.session_state.appliance_list[selected_extra] = {"watt": watt_value, "qty": 1}
+            st.success(f"Added {selected_extra}!")
+            st.rerun()
+        else:
+            st.warning("This appliance is already in your active list!")
 
-brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
+    st.markdown("---")
+
+    # --- Section B: Quantities Controller for Active Appliances ---
+    st.subheader("📝 Active Appliances List")
+    
+    total_running_watt = 0
+    
+    # Render Quantity Inputs Dynamically
+    for app_name, app_data in list(st.session_state.appliance_list.items()):
+        col_app, col_del = st.columns([4, 1])
+        
+        with col_app:
+            new_qty = st.number_input(
+                f"{app_name}",
+                min_value=0,
+                max_value=100,
+                value=app_data["qty"],
+                step=1,
+                key=f"qty_{app_name}"
+            )
+            st.session_state.appliance_list[app_name]["qty"] = new_qty
+            
+        with col_del:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🗑️", key=f"del_{app_name}", help=f"Remove {app_name}"):
+                del st.session_state.appliance_list[app_name]
+                st.rerun()
+
+        # Calculate Running Wattage for each appliance
+        total_running_watt += app_data["watt"] * new_qty
+
+    st.markdown("---")
+    
+    # Daily Running Hours Input
+    running_hours = st.slider("⏱️ Avg Daily Running Hours", 1, 24, 8)
+
+    # Automatically Computed Metrics
+    total_kwh_per_day = (total_running_watt * running_hours) / 1000.0
+
+    st.metric("⚡ Total Load", f"{total_running_watt} Watts")
+    st.metric("📊 Daily Consumption", f"{total_kwh_per_day:.2f} kWh/day")
 
 # ==========================================
 # 4. Roof Area Calculator Component
