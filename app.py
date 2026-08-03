@@ -20,27 +20,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Modern UI & Universal Contrast
+# Custom CSS for Clear Visibility & Universal Contrast
 st.markdown("""
 <style>
 .main { background-color: #F8FAFC; }
 
-/* Metric Box Styling with Dark Text */
+/* Enhanced Metric Box Styling with Better Padding & Clear Text */
 div[data-testid="stMetric"] {
     background-color: #FFFFFF !important;
     border-radius: 12px;
-    padding: 10px 12px !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border-left: 5px solid #F59E0B;
+    padding: 15px 18px !important;
+    box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.08);
+    border-left: 6px solid #F59E0B;
+    min-height: 95px;
+}
+
+div[data-testid="stMetricLabel"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    white-space: nowrap !important;
 }
 
 div[data-testid="stMetricValue"] {
-    font-size: 1.3rem !important;
-    word-break: break-word !important;
-}
-
-div[data-testid="stMetric"] * {
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
     color: #0F172A !important;
+    word-break: normal !important;
+    white-space: nowrap !important;
 }
 
 .stButton>button {
@@ -251,7 +258,6 @@ inverter_kva = (surge_watts * 1.25) / 1000
 solar_kwp = (daily_wh / 4.0 / 0.85) / 1000 if daily_wh > 0 else 0
 panels_count = math.ceil((solar_kwp * 1000) / 550) if solar_kwp > 0 else 0
 
-# Required roof area calculation (1 kWp needs approx 100 Sq. Ft)
 required_roof_sqft = math.ceil(solar_kwp * 100)
 
 panel_unit_price = 28 * brand_multiplier if "Tier-1" in panel_brand else 25
@@ -284,14 +290,13 @@ yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 
 # ==========================================
-# 5. Main Dashboard Rendering Metrics
+# 5. Main Dashboard Rendering Metrics (Clean 4-Column Layout)
 # ==========================================
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load" if lang == "English" else "চলমান লোড", f"{running_watts} W")
 col2.metric("Peak Surge Load" if lang == "English" else "সর্বোচ্চ স্টার্ট লোড", f"{surge_watts:.0f} W")
 col3.metric("Daily Usage" if lang == "English" else "দৈনিক ব্যবহার", f"{daily_kwh:.2f} kWh")
-col4.metric("Required Roof Area" if lang == "English" else "প্রয়োজনীয় ছাদের আয়তন", f"~{required_roof_sqft} Sq. Ft")
-col5.metric("Total Budget" if lang == "English" else "মোট বাজেট", f"BDT {total_cost:,.0f}")
+col4.metric("Total Budget" if lang == "English" else "মোট বাজেট", f"BDT {total_cost:,.0f}")
 
 st.markdown("---")
 
