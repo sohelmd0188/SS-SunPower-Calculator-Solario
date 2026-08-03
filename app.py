@@ -3,6 +3,9 @@ import pandas as pd
 import plotly.express as px
 import requests
 import math
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -68,7 +71,7 @@ if lang == "English":
     st.caption("Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.")
 else:
     st.title("☀️ স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড")
-    st.caption("বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যাণ্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।")
+    st.caption("বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যান্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।")
 
 st.markdown("---")
 
@@ -212,7 +215,57 @@ else:
 st.markdown("---")
 
 # ==========================================
-# 7. 24-Hour Solar Generation Chart
+# 7. Auto CAD Solar Panel Layout Simulation
+# ==========================================
+st.subheader("📐 Auto CAD Solar Panel Layout Simulation" if lang == "English" else "📐 অটোমেটিক সোলার লেআউট ক্যাড ডিজাইন")
+
+if panels_count > 0 and roof_sqft > 0:
+    # Estimate standard roof dimension (width x length in ft)
+    roof_w = np.sqrt(roof_sqft * 1.5)
+    roof_l = roof_sqft / roof_w
+
+    p_w, p_l = 3.5, 6.5 # Approx 550W panel size in feet
+
+    cols = int(roof_w // (p_w + 0.5))
+    if cols < 1: cols = 1
+    rows = int(np.ceil(panels_count / cols))
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    roof_rect = patches.Rectangle((0, 0), roof_w, roof_l, linewidth=2, edgecolor='#1E293B', facecolor='#F1F5F9', linestyle='--')
+    ax.add_patch(roof_rect)
+    ax.text(roof_w/2, -1.8, f"Roof Width: {roof_w:.1f} ft", ha='center', fontsize=9, color='#475569')
+    ax.text(-1.8, roof_l/2, f"Roof Length: {roof_l:.1f} ft", va='center', rotation='vertical', fontsize=9, color='#475569')
+
+    placed = 0
+    start_x, start_y = 1.0, 1.0
+
+    for r in range(rows):
+        for c in range(cols):
+            if placed < panels_count:
+                x = start_x + c * (p_w + 0.5)
+                y = start_y + r * (p_l + 0.5)
+                
+                if (x + p_w <= roof_w) and (y + p_l <= roof_l):
+                    panel_patch = patches.Rectangle((x, y), p_w, p_l, linewidth=1, edgecolor='#0284C7', facecolor='#0284C7', alpha=0.75)
+                    ax.add_patch(panel_patch)
+                    ax.plot([x, x+p_w], [y+p_l/2, y+p_l/2], color='white', linewidth=0.5)
+                    ax.plot([x+p_w/2, x+p_w/2], [y, y+p_l], color='white', linewidth=0.5)
+                    placed += 1
+
+    ax.set_xlim(-4, roof_w + 4)
+    ax.set_ylim(-4, roof_l + 4)
+    ax.set_aspect('equal')
+    ax.axis('off')
+    title_text = f"CAD Layout: {placed} Panels Placed on Roof ({panels_count} Required)" if lang == "English" else f"ক্যাড লেআউট: ছাদ অনুযায়ী {placed}টি প্যানেল বসানো হয়েছে (প্রয়োজন {panels_count}টি)"
+    plt.title(title_text, fontsize=10, fontweight='bold', pad=10)
+    st.pyplot(fig)
+else:
+    st.info("No panels or roof space specified for CAD layout.")
+
+st.markdown("---")
+
+# ==========================================
+# 8. 24-Hour Solar Generation Chart
 # ==========================================
 st.subheader("📊 24-Hour Solar Generation Simulation" if lang == "English" else "📊 ২৪ ঘণ্টার সৌর বিদ্যুৎ উৎপাদন গ্রাফ")
 hours = list(range(24))
@@ -229,7 +282,7 @@ st.plotly_chart(fig, use_container_width=True)
 st.markdown("---")
 
 # ==========================================
-# 8. Live Weather Solar Tracker (City & Map)
+# 9. Live Weather Solar Tracker (City & Map)
 # ==========================================
 st.subheader("🌦️ Live Weather-Based Solar Tracker" if lang == "English" else "🌦️ লাইভ আবহাওয়া ট্র্যাকার")
 
@@ -297,7 +350,7 @@ else:
                 st.error("Error fetching weather data for coordinates!")
 
 # ==========================================
-# 9. Footer Section
+# 10. Footer Section
 # ==========================================
 st.markdown("---")
 st.markdown(
