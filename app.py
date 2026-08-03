@@ -14,7 +14,7 @@ from streamlit_folium import st_folium
 # 1. Page Configuration & Custom UI Styling
 # ==========================================
 st.set_page_config(
-    page_title="Smart Solar Dashboard & Calculator",
+    page_title="Smart Solar Dashboard & Calculator (Solario)",
     page_icon="☀️",
     layout="wide"
 )
@@ -62,19 +62,76 @@ div[data-testid="stMetric"] * {
 API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
 
 # ==========================================
-# 2. Header Section & Multi-language Option
+# Header & Hero Banner Section (Universal Theme Compatible)
 # ==========================================
+
+# Custom CSS for Hero Banner Background Image & Text Contrast
+st.markdown("""
+<style>
+/* Universal Hero Banner with Responsive Background Image */
+.hero-container {
+    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
+                url('http://googleusercontent.com/image_generation_content/493');
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    padding: 30px 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.hero-title {
+    color: #F8FAFC !important;
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 8px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hero-subtitle {
+    color: #CBD5E1 !important;
+    font-size: 1.05rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    margin-bottom: 0px !important;
+}
+
+.hero-badge {
+    display: inline-block;
+    background-color: #F59E0B;
+    color: #0F172A !important;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Language Selector (Above Header)
 lang = st.radio("🌐 Language / ভাষা:", ["English", "বাংলা"], horizontal=True)
 
+# Hero Banner Output
 if lang == "English":
-    st.title("☀️ Smart Commercial Solar Calculator & Dashboard")
-    st.caption("Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.")
+    st.markdown("""
+    <div class="hero-container">
+        <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
+        <div class="hero-title">Smart Commercial Solar Calculator & Dashboard</div>
+        <div class="hero-subtitle">Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.</div>
+    </div>
+    """, unsafe_allow_html=True)
 else:
-    st.title("☀️ স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড")
-    st.caption("বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যান্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।")
+    st.markdown("""
+    <div class="hero-container">
+        <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
+        <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
+        <div class="hero-subtitle">বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যান্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
-
 # ==========================================
 # 3. Sidebar Inputs
 # ==========================================
