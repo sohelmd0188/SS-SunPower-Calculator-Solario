@@ -7,7 +7,13 @@ import math
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
 # ==========================================
-# Custom CSS for Modern UI
+st.set_page_config(
+    page_title="Smart Solar Dashboard & Calculator",
+    page_icon="☀️",
+    layout="wide"
+)
+
+# Custom CSS for Modern UI & Text Overflow Fix
 st.markdown("""
 <style>
 .main { background-color: #F8FAFC; }
@@ -21,32 +27,13 @@ div[data-testid="stMetric"] {
     border-left: 5px solid #F59E0B;
 }
 
-/* Fix text size and prevent text clipping/overflow */
+/* Fix text size & prevent text clipping/overflow in metric boxes */
 div[data-testid="stMetricValue"] {
-    font-size: 1.4rem !important;
+    font-size: 1.3rem !important;
     word-break: break-word !important;
 }
 
 /* Force dark text for metric box */
-div[data-testid="stMetric"] * {
-    color: #0F172A !important;
-}
-
-.stButton>button {
-    width: 100%;
-    background-color: #F59E0B;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    padding: 10px;
-}
-.stButton>button:hover {
-    background-color: #D97706;
-    color: white;
-}
-</style>
-""", unsafe_allow_html=True)
 div[data-testid="stMetric"] * {
     color: #0F172A !important;
 }
@@ -172,14 +159,11 @@ payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 # ==========================================
 # 6. Main Dashboard Rendering
 # ==========================================
-# ==========================================
-# 6. Main Dashboard Rendering
-# ==========================================
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load", f"{running_watts} W")
 col2.metric("Peak Surge Load", f"{surge_watts:.0f} W")
 col3.metric("Daily Usage", f"{daily_kwh:.2f} kWh")
-col4.metric("Total Estimated Budget", f"BDT {total_cost:,.0f}")
+col4.metric("Total Budget", f"BDT {total_cost:,.0f}")
 
 st.markdown("---")
 
@@ -210,7 +194,6 @@ with c2:
     st.write(f"📈 **Estimated Payback Period (ROI):** ~**{payback_years:.1f} Years**")
 
 st.markdown("---")
-# Total Cost Banner Added Here
 st.success(f"### 🎯 Total Estimated System Cost: BDT {total_cost:,.0f}")
 st.markdown("---")
 
