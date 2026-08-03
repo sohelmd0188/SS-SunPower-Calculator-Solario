@@ -299,7 +299,7 @@ if panels_count > 0 and roof_sqft > 0:
         view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
         st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state, tooltip={"text": "Roof & Solar Panel Array"}))
 
-    # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
+# --- LEVEL 3: Real Satellite Interactive Solar Placement ---
     elif "Level 3" in cad_mode:
         st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof** to place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ল্যাটিটিউড-লংটিটিউড দিন অথবা ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি সোলার প্যানেল ছাদের ওপর বসে যাবে!")
         
@@ -374,7 +374,6 @@ if panels_count > 0 and roof_sqft > 0:
             st.success(f"🎉 **{placed_count} Solar Panels placed at Coordinates:** Lat `{click_lat:.6f}`, Lon `{click_lon:.6f}`")
         else:
             st.info("💡 Click on your rooftop above to position the solar panel layout!" if lang == "English" else "💡 আপনার ছাদের সঠিক স্থানে প্যানেল বসাতে ওপরের ম্যাপে ক্লিক করুন!")
-
 st.markdown("---")
 
 # ==========================================
