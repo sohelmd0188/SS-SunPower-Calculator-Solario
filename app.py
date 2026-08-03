@@ -153,11 +153,14 @@ payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 # ==========================================
 # 6. Main Dashboard Rendering
 # ==========================================
+# ==========================================
+# 6. Main Dashboard Rendering
+# ==========================================
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load", f"{running_watts} W")
 col2.metric("Peak Surge Load", f"{surge_watts:.0f} W")
 col3.metric("Daily Usage", f"{daily_kwh:.2f} kWh")
-col4.metric("Total Budget", f"BDT {total_cost:,.0f}")
+col4.metric("Total Estimated Budget", f"BDT {total_cost:,.0f}")
 
 st.markdown("---")
 
@@ -187,6 +190,9 @@ with c2:
     st.write(f"💵 **Est. Monthly Savings:** BDT {monthly_savings:,.0f} / month")
     st.write(f"📈 **Estimated Payback Period (ROI):** ~**{payback_years:.1f} Years**")
 
+st.markdown("---")
+# Total Cost Banner Added Here
+st.success(f"### 🎯 Total Estimated System Cost: BDT {total_cost:,.0f}")
 st.markdown("---")
 
 # ==========================================
