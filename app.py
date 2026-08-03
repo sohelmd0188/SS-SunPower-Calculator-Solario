@@ -7,12 +7,6 @@ import math
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
 # ==========================================
-st.set_page_config(
-    page_title="Smart Solar Dashboard & Calculator",
-    page_icon="☀️",
-    layout="wide"
-)
-
 # Custom CSS for Modern UI
 st.markdown("""
 <style>
@@ -22,12 +16,37 @@ st.markdown("""
 div[data-testid="stMetric"] {
     background-color: #FFFFFF !important;
     border-radius: 12px;
-    padding: 15px 20px;
+    padding: 10px 12px !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     border-left: 5px solid #F59E0B;
 }
 
+/* Fix text size and prevent text clipping/overflow */
+div[data-testid="stMetricValue"] {
+    font-size: 1.4rem !important;
+    word-break: break-word !important;
+}
+
 /* Force dark text for metric box */
+div[data-testid="stMetric"] * {
+    color: #0F172A !important;
+}
+
+.stButton>button {
+    width: 100%;
+    background-color: #F59E0B;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+}
+.stButton>button:hover {
+    background-color: #D97706;
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
 div[data-testid="stMetric"] * {
     color: #0F172A !important;
 }
