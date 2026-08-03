@@ -16,10 +16,11 @@ from streamlit_folium import st_folium
 st.set_page_config(
     page_title="Smart Solar Dashboard & Calculator (Solario)",
     page_icon="☀️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Modern UI & Text Overflow Fix
+# Custom CSS for Modern UI & Universal Contrast
 st.markdown("""
 <style>
 .main { background-color: #F8FAFC; }
@@ -55,19 +56,8 @@ div[data-testid="stMetric"] * {
     background-color: #D97706;
     color: white;
 }
-</style>
-""", unsafe_allow_html=True)
 
-# OpenWeatherMap API Key
-API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
-
-# ==========================================
-# Header & Hero Banner Section (Universal Theme Compatible)
-# ==========================================
-
-st.markdown("""
-<style>
-/* Universal Hero Banner with Guaranteed Background Image */
+/* Universal Hero Banner */
 .hero-container {
     background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
                 url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=1200&auto=format&fit=crop');
@@ -79,7 +69,6 @@ st.markdown("""
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(245, 158, 11, 0.4);
 }
-
 .hero-title {
     color: #FFFFFF !important;
     font-size: 2.2rem !important;
@@ -87,7 +76,6 @@ st.markdown("""
     margin-bottom: 8px !important;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
-
 .hero-subtitle {
     color: #E2E8F0 !important;
     font-size: 1.05rem !important;
@@ -96,7 +84,6 @@ st.markdown("""
     margin-bottom: 0px !important;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
-
 .hero-badge {
     display: inline-block;
     background-color: #F59E0B;
@@ -111,10 +98,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Language Selector
+# OpenWeatherMap API Key
+API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
+
+# ==========================================
+# 2. Header Section & Multi-language Option
+# ==========================================
 lang = st.radio("🌐 Language / ভাষা:", ["English", "বাংলা"], horizontal=True)
 
-# Hero Banner Content
 if lang == "English":
     st.markdown("""
     <div class="hero-container">
@@ -134,15 +125,11 @@ else:
 
 st.markdown("---")
 
-
 # ==========================================
-# 3. Sidebar Inputs
-# ==========================================
-# ==========================================
-# Dynamic Appliance & Load Management System
+# 3. Sidebar Inputs & Dynamic Appliance System
 # ==========================================
 
-# Initialize Default Appliances in Session State
+# Initialize Session State Appliances
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
         "Ceiling Fan (75W)": {"watt": 75, "qty": 5},
@@ -153,7 +140,7 @@ if "appliance_list" not in st.session_state:
         "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1}
     }
 
-# Pre-defined extra appliances dictionary for Quick Selection
+# Extra appliances list for dropdown
 EXTRA_APPLIANCES = {
     "1.5 Ton Inverter AC (1500W)": 1500,
     "1 Ton Non-Inverter AC (1200W)": 1200,
@@ -167,90 +154,101 @@ EXTRA_APPLIANCES = {
     "Induction Cooker (1800W)": 1800
 }
 
-with st.sidebar:
-    st.header("🔌 1. Appliance Quantities & Load")
+st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-    # --- Section A: Add New Extra Appliance Option ---
-    st.subheader("➕ Add Extra Appliance")
-    selected_extra = st.selectbox(
-        "Choose an Appliance to Add:",
-        options=list(EXTRA_APPLIANCES.keys()),
-        key="selected_extra_appliance"
-    )
+# Option to add extra appliance
+st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
+selected_extra = st.sidebar.selectbox(
+    "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
+    options=list(EXTRA_APPLIANCES.keys()),
+    key="selected_extra_appliance"
+)
 
-    if st.button("➕ Add to Load List", use_container_width=True):
-        if selected_extra not in st.session_state.appliance_list:
-            watt_value = EXTRA_APPLIANCES[selected_extra]
-            # Add to main active appliance state
-            st.session_state.appliance_list[selected_extra] = {"watt": watt_value, "qty": 1}
-            st.success(f"Added {selected_extra}!")
-            st.rerun()
-        else:
-            st.warning("This appliance is already in your active list!")
+if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তালিকা যুক্ত করুন", use_container_width=True):
+    if selected_extra not in st.session_state.appliance_list:
+        watt_value = EXTRA_APPLIANCES[selected_extra]
+        st.session_state.appliance_list[selected_extra] = {"watt": watt_value, "qty": 1}
+        st.sidebar.success(f"Added {selected_extra}!")
+        st.rerun()
+    else:
+        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
 
-    st.markdown("---")
+st.sidebar.markdown("---")
+st.sidebar.subheader("📝 Active Appliances" if lang == "English" else "📝 বর্তমান ব্যবহারের তালিকা")
 
-    # --- Section B: Quantities Controller for Active Appliances ---
-    st.subheader("📝 Active Appliances List")
+# Render active appliances dynamically
+for app_name, app_data in list(st.session_state.appliance_list.items()):
+    col_app, col_del = st.sidebar.columns([4, 1])
     
-    total_running_watt = 0
-    
-    # Render Quantity Inputs Dynamically
-    for app_name, app_data in list(st.session_state.appliance_list.items()):
-        col_app, col_del = st.columns([4, 1])
+    with col_app:
+        new_qty = st.number_input(
+            f"{app_name}",
+            min_value=0,
+            max_value=100,
+            value=app_data["qty"],
+            step=1,
+            key=f"qty_{app_name}"
+        )
+        st.session_state.appliance_list[app_name]["qty"] = new_qty
         
-        with col_app:
-            new_qty = st.number_input(
-                f"{app_name}",
-                min_value=0,
-                max_value=100,
-                value=app_data["qty"],
-                step=1,
-                key=f"qty_{app_name}"
-            )
-            st.session_state.appliance_list[app_name]["qty"] = new_qty
-            
-        with col_del:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🗑️", key=f"del_{app_name}", help=f"Remove {app_name}"):
-                del st.session_state.appliance_list[app_name]
-                st.rerun()
+    with col_del:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🗑️", key=f"del_{app_name}", help=f"Remove {app_name}"):
+            del st.session_state.appliance_list[app_name]
+            st.rerun()
 
-        # Calculate Running Wattage for each appliance
-        total_running_watt += app_data["watt"] * new_qty
+st.sidebar.markdown("---")
+st.sidebar.header("⏱️ 2. Daily Usage (Hours)" if lang == "English" else "⏱️ ২. দৈনিক ব্যবহার (ঘণ্টা)")
+avg_running_hours = st.sidebar.slider("Avg Daily Running Hours" if lang == "English" else "দৈনিক গড় ব্যবহার (ঘণ্টা)", 1, 24, 8)
 
-    st.markdown("---")
-    
-    # Daily Running Hours Input
-    running_hours = st.slider("⏱️ Avg Daily Running Hours", 1, 24, 8)
+st.sidebar.markdown("---")
+st.sidebar.header("⚙️ 3. Equipment & Brand Selection" if lang == "English" else "⚙️ ৩. যন্ত্রপাতি ও ব্র্যান্ড নির্বাচন")
 
-    # Automatically Computed Metrics
-    total_kwh_per_day = (total_running_watt * running_hours) / 1000.0
+system_type = st.sidebar.radio("Select System Type:" if lang == "English" else "সিস্টেম টাইপ নির্বাচন করুন:", 
+                               ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"])
 
-    st.metric("⚡ Total Load", f"{total_running_watt} Watts")
-    st.metric("📊 Daily Consumption", f"{total_kwh_per_day:.2f} kWh/day")
+panel_brand = st.sidebar.selectbox("Solar Panel Brand:" if lang == "English" else "সোলার প্যানেল ব্র্যান্ড:", 
+                                  ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Canadian Solar", "Standard Brand"])
+inverter_brand = st.sidebar.selectbox("Inverter Brand:" if lang == "English" else "ইনভার্টার ব্র্যান্ড:", 
+                                     ["Growatt", "Deye", "Huawei", "Must / Standard"])
 
-# ==========================================
-# 4. Roof Area Calculator Component
-# ==========================================
+if "With Battery" in system_type:
+    battery_type = st.sidebar.selectbox("Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
+                                        ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"])
+
+brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
+
+# Roof Area Calculator Component
 st.sidebar.markdown("---")
 st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
 roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
 max_possible_kwp = (roof_sqft / 100) * 1.0
 
 # ==========================================
-# 5. Backend Calculations & ROI Logic
+# 4. Backend Calculations & Dynamic ROI
 # ==========================================
-running_watts = (fan_qty * 75) + (light_qty * 15) + (fridge_qty * 200) + (tv_qty * 80) + (oven_qty * 1200) + (pump_qty * 750)
-surge_watts = (fan_qty * 75) + (light_qty * 15) + (tv_qty * 80) + (oven_qty * 1200) + (fridge_qty * 200 * 2.5) + (pump_qty * 750 * 3)
+running_watts = 0
+surge_watts = 0
 
-daily_wh = (fan_qty * 75 * fan_hours) + (light_qty * 15 * light_hours) + \
-           (fridge_qty * 200 * 12) + (tv_qty * 80 * tv_hours) + \
-           (oven_qty * 1200 * oven_hours) + (pump_qty * 750 * pump_hours)
-daily_kwh = daily_wh / 1000
+for app_name, app_data in st.session_state.appliance_list.items():
+    qty = app_data["qty"]
+    watt = app_data["watt"]
+    running_watts += watt * qty
+    
+    if "Refrigerator" in app_name:
+        surge_watts += watt * qty * 2.5
+    elif "Pump" in app_name:
+        surge_watts += watt * qty * 3.0
+    elif "AC" in app_name:
+        surge_watts += watt * qty * 1.5
+    else:
+        surge_watts += watt * qty
+
+daily_wh = running_watts * avg_running_hours
+daily_kwh = daily_wh / 1000.0
 
 inverter_kva = (surge_watts * 1.25) / 1000
-solar_kwp = (daily_wh / 4.0 / 0.85) / 1000
+solar_kwp = (daily_wh / 4.0 / 0.85) / 1000 if daily_wh > 0 else 0
 panels_count = math.ceil((solar_kwp * 1000) / 550) if solar_kwp > 0 else 0
 
 panel_unit_price = 28 * brand_multiplier if "Tier-1" in panel_brand else 25
@@ -283,7 +281,7 @@ yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 
 # ==========================================
-# 6. Main Dashboard Rendering
+# 5. Main Dashboard Rendering Metrics
 # ==========================================
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Running Load" if lang == "English" else "চলমান লোড", f"{running_watts} W")
@@ -323,7 +321,7 @@ with c2:
 st.markdown("---")
 
 # ==========================================
-# 7. CAD & Solar Layout Options (Levels 1, 2, 3)
+# 6. CAD & Solar Layout Options (Levels 1, 2, 3)
 # ==========================================
 st.subheader("📐 Auto Solar CAD & Custom Location Design" if lang == "English" else "📐 সোলার ক্যাড ও নিজস্ব লোকেশন ডিজাইন")
 
@@ -417,7 +415,7 @@ if panels_count > 0 and roof_sqft > 0:
         view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
         st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state, tooltip={"text": "Roof & Solar Panel Array"}))
 
-# --- LEVEL 3: Real Satellite Interactive Solar Placement ---
+    # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
     elif "Level 3" in cad_mode:
         st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof** to place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ল্যাটিটিউড-লংটিটিউড দিন অথবা ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি সোলার প্যানেল ছাদের ওপর বসে যাবে!")
         
@@ -494,7 +492,7 @@ if panels_count > 0 and roof_sqft > 0:
 st.markdown("---")
 
 # ==========================================
-# 8. 24-Hour Solar Generation Chart
+# 7. 24-Hour Solar Generation Chart
 # ==========================================
 st.subheader("📊 24-Hour Solar Generation Simulation" if lang == "English" else "📊 ২৪ ঘণ্টার সৌর বিদ্যুৎ উৎপাদন গ্রাফ")
 hours = list(range(24))
@@ -511,7 +509,7 @@ st.plotly_chart(fig, use_container_width=True)
 st.markdown("---")
 
 # ==========================================
-# 9. Live Weather Solar Tracker (City & Map)
+# 8. Live Weather Solar Tracker (City & Map)
 # ==========================================
 st.subheader("🌦️ Live Weather-Based Solar Tracker" if lang == "English" else "🌦️ লাইভ আবহাওয়া ট্র্যাকার")
 
@@ -577,7 +575,7 @@ else:
                 st.error("Error fetching weather data for coordinates!")
 
 # ==========================================
-# 10. Footer Section
+# 9. Footer Section
 # ==========================================
 st.markdown("---")
 st.markdown(
