@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import pydeck as pdk
+import folium
+from streamlit_folium import st_folium
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -31,13 +33,11 @@ div[data-testid="stMetric"] {
     border-left: 5px solid #F59E0B;
 }
 
-/* Fix text size & prevent text clipping/overflow in metric boxes */
 div[data-testid="stMetricValue"] {
     font-size: 1.3rem !important;
     word-break: break-word !important;
 }
 
-/* Force dark text for metric box */
 div[data-testid="stMetric"] * {
     color: #0F172A !important;
 }
@@ -207,11 +207,11 @@ st.markdown("---")
 # ==========================================
 # 7. CAD & Solar Layout Options (Levels 1, 2, 3)
 # ==========================================
-st.subheader("📐 Auto Solar CAD & Layout Simulation" if lang == "English" else "📐 অটোমেটিক সোলার ক্যাড ও লেআউট ডিজাইন")
+st.subheader("📐 Auto Solar CAD & Custom Location Design" if lang == "English" else "📐 সোলার ক্যাড ও নিজস্ব লোকেশন ডিজাইন")
 
 cad_mode = st.radio(
     "Choose Design View Level:" if lang == "English" else "ডিজাইন ভিউ বেছে নিন:",
-    ["Level 1: 2D Blueprint (Matplotlib)", "Level 2: 3D Interactive Model (Pydeck)", "Level 3: Satellite Location Solar Layout"],
+    ["Level 1: 2D Blueprint (Matplotlib)", "Level 2: 3D Interactive Model (Pydeck)", "Level 3: Custom Satellite Roof Placement"],
     horizontal=True
 )
 
@@ -258,10 +258,11 @@ if panels_count > 0 and roof_sqft > 0:
 
     # --- LEVEL 2: 3D Interactive Model ---
     elif "Level 2" in cad_mode:
-        st.caption("🖱️ *Use your mouse to rotate (Ctrl+Drag), zoom, and inspect the 3D roof structure.*" if lang == "English" else "🖱️ *মাউস দিয়ে ঘুরিয়ে (Ctrl+Drag) ও জুম করে ৩ডি মডেলটি দেখুন।*")
-        
-        # 3D Coordinates Generation
-        base_lat, base_lon = 23.8103, 90.4125
+        st.write("📍 **Enter your coordinates or use default to generate 3D Building:**" if lang == "English" else "📍 **আপনার ৩ডি বিল্ডিং তৈরির জন্য লোকেশন কোঅর্ডিনেট দিন:**")
+        c1, c2 = st.columns(2)
+        base_lat = c1.number_input("Latitude", value=23.8103, format="%.4f")
+        base_lon = c2.number_input("Longitude", value=90.4125, format="%.4f")
+
         building_data = [{
             "coordinates": [
                 [base_lon - 0.0001, base_lat - 0.0001],
@@ -298,17 +299,57 @@ if panels_count > 0 and roof_sqft > 0:
         view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
         st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state, tooltip={"text": "Roof & Solar Panel Array"}))
 
-    # --- LEVEL 3: Satellite Map Solar Layout ---
+    # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
     elif "Level 3" in cad_mode:
-        st.info("🛰️ **Satellite Location View:** Simulating solar array layout over satellite roof view." if lang == "English" else "🛰️ **স্যাটেলাইট লোকেশন ভিউ:** উপগ্রহ ম্যাপের ওপর সোলার প্যানেল বসানোর অনুকরণ।")
+        st.info("🗺️ **How to use:** Zoom into the Google Satellite Map, find your home/building, and **CLICK on your roof** to instantly place the {0} solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** স্যাটেলাইট ম্যাপে জুম করে আপনার বাসা/বিল্ডিং খুঁজে বের করুন এবং **আপনার ছাদের ওপর ক্লিক করুন**। সাথে সাথে আপনার ছাদ অনুযায়ী {panels_count}টি সোলার প্যানেল সেখানে বসে যাবে!")
         
-        satellite_data = pd.DataFrame({
-            'lat': [23.8103 + (i * 0.00001) for i in range(panels_count)],
-            'lon': [90.4125 + (i * 0.00001) for i in range(panels_count)]
-        })
+        # Interactive Folium Satellite Map
+        sat_map = folium.Map(
+            location=[23.8103, 90.4125], 
+            zoom_start=18, 
+            tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
+            attr='Google Satellite'
+        )
         
-        st.map(satellite_data, zoom=18, size=15)
-        st.success(f"📍 **Mapped {panels_count} Solar Panels onto real coordinates.**" if lang == "English" else f"📍 **বাস্তব স্যাটেলাইট ম্যাপে {panels_count}টি প্যানেল নির্দেশিত হয়েছে।**")
+        folium.LatLngPopup().add_to(sat_map)
+        sat_data = st_folium(sat_map, height=450, width=900)
+        
+        if sat_data and sat_data.get("last_clicked"):
+            click_lat = sat_data["last_clicked"]["lat"]
+            click_lon = sat_data["last_clicked"]["lng"]
+            
+            st.success(f"📌 **Selected Roof Coordinates:** Lat {click_lat:.6f}, Lon {click_lon:.6f}")
+            
+            # Re-render Map with Placed Solar Array
+            placed_map = folium.Map(
+                location=[click_lat, click_lon], 
+                zoom_start=20, 
+                tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
+                attr='Google Satellite'
+            )
+            
+            # Calculate panel positions around selected roof center
+            placed_count = 0
+            for r in range(rows):
+                for c in range(cols):
+                    if placed_count < panels_count:
+                        p_lat = click_lat + (r * 0.00003)
+                        p_lon = click_lon + (c * 0.00003)
+                        
+                        # Draw Solar Panel rectangle on satellite image
+                        bounds = [[p_lat, p_lon], [p_lat + 0.000025, p_lon + 0.000025]]
+                        folium.Rectangle(
+                            bounds=bounds,
+                            color="#38BDF8",
+                            fill=True,
+                            fill_color="#0284C7",
+                            fill_opacity=0.8,
+                            tooltip=f"Solar Panel #{placed_count + 1} (550W)"
+                        ).add_to(placed_map)
+                        placed_count += 1
+                        
+            st_folium(placed_map, height=450, width=900, key="solar_placed_map")
+            st.success(f"🎉 **{placed_count} Solar Panels successfully placed on your roof!**" if lang == "English" else f"🎉 **আপনার ছাদের ওপর সফলভাবে {placed_count}টি সোলার প্যানেল প্লেস করা হয়েছে!**")
 
 st.markdown("---")
 
@@ -363,8 +404,6 @@ if track_type in ["Bangladesh City List", "বাংলাদেশের শহ
 
 else:
     st.info("🗺️ **Click anywhere on the map to pick a location:**" if lang == "English" else "🗺️ **ম্যাপের যেকোনো স্থানে ক্লিক করে লোকেশন নির্বাচন করুন:**")
-    import folium
-    from streamlit_folium import st_folium
 
     m = folium.Map(location=[23.8103, 90.4125], zoom_start=7)
     folium.LatLngPopup().add_to(m)
