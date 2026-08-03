@@ -62,39 +62,39 @@ div[data-testid="stMetric"] * {
 API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
 
 # ==========================================
-# Header & Hero Banner Section (Universal Theme Compatible)
+# 2. Header & Hero Banner Section (Universal Theme Compatible)
 # ==========================================
 
-# Custom CSS for Hero Banner Background Image & Text Contrast
 st.markdown("""
 <style>
-/* Universal Hero Banner with Responsive Background Image */
+/* Universal Hero Banner with Dynamic Background Image */
 .hero-container {
     background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
-                url('http://googleusercontent.com/image_generation_content/493');
+                url('http://googleusercontent.com/image_generation_content/5470592169624298758.png');
     background-size: cover;
     background-position: center;
     border-radius: 16px;
-    padding: 30px 25px;
+    padding: 35px 25px;
     margin-bottom: 25px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .hero-title {
-    color: #F8FAFC !important;
+    color: #FFFFFF !important;
     font-size: 2.2rem !important;
     font-weight: 800 !important;
     margin-bottom: 8px !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 .hero-subtitle {
-    color: #CBD5E1 !important;
+    color: #E2E8F0 !important;
     font-size: 1.05rem !important;
     font-weight: 400 !important;
     line-height: 1.5 !important;
     margin-bottom: 0px !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .hero-badge {
@@ -102,18 +102,19 @@ st.markdown("""
     background-color: #F59E0B;
     color: #0F172A !important;
     font-weight: 700;
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 20px;
     font-size: 0.85rem;
     margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Language Selector (Above Header)
+# Language Selector
 lang = st.radio("🌐 Language / ভাষা:", ["English", "বাংলা"], horizontal=True)
 
-# Hero Banner Output
+# Hero Banner Content
 if lang == "English":
     st.markdown("""
     <div class="hero-container">
@@ -132,6 +133,8 @@ else:
     """, unsafe_allow_html=True)
 
 st.markdown("---")
+
+
 # ==========================================
 # 3. Sidebar Inputs
 # ==========================================
