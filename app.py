@@ -304,18 +304,18 @@ if panels_count > 0 and roof_sqft > 0:
         st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof** to place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ল্যাটিটিউড-লংটিটিউড দিন অথবা ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি সোলার প্যানেল ছাদের ওপর বসে যাবে!")
         
         c1, c2 = st.columns(2)
-        base_lat = c1.number_input("Latitude", value=23.8103, format="%.6f", key="sat_lat")
-        base_lon = c2.number_input("Longitude", value=90.4125, format="%.6f", key="sat_lon")
+        base_lat = c1.number_input("Latitude", value=22.376735, format="%.6f", key="sat_lat")
+        base_lon = c2.number_input("Longitude", value=91.839035, format="%.6f", key="sat_lon")
 
-        # Create Map object centered at user input
+        # Base Satellite Map Centered at User Coordinates
         sat_map = folium.Map(
             location=[base_lat, base_lon], 
-            zoom_start=19, 
+            zoom_start=20, 
             tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
             attr='Google Satellite'
         )
 
-        # Interactive Satellite Map Selection
+        # Interactive Map capturing user clicks
         sat_data = st_folium(sat_map, height=500, width=900, key="sat_map_input")
 
         click_lat, click_lon = base_lat, base_lon
@@ -327,34 +327,33 @@ if panels_count > 0 and roof_sqft > 0:
             is_clicked = True
 
         st.markdown("---")
-        
-        # Render the Visualization Map with Solar Panels Placed
         st.subheader("📍 Rooftop Solar Placement View" if lang == "English" else "📍 ছাদে সোলার প্যানেল প্লেসমেন্ট ভিউ")
         
+        # Rendering the Solar Panel Grid on Selected Coordinates
         viz_map = folium.Map(
             location=[click_lat, click_lon], 
-            zoom_start=20, 
+            zoom_start=21, 
             tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
             attr='Google Satellite'
         )
 
-        # Add red pin marker on chosen location
+        # Center Roof Pin
         folium.Marker(
             [click_lat, click_lon], 
-            tooltip="Selected Roof Center",
+            tooltip="Selected Roof Location",
             icon=folium.Icon(color="red", icon="home")
         ).add_to(viz_map)
 
-        # Draw Blue Solar Panels Grid on top of satellite roof
+        # Solar Panels Array Drawing
         placed_count = 0
         for r in range(rows):
             for c in range(cols):
                 if placed_count < panels_count:
-                    # Offset calculation for centered layout
-                    p_lat = click_lat + ((r - rows/2) * 0.000025)
-                    p_lon = click_lon + ((c - cols/2) * 0.000025)
+                    # Latitude & Longitude small offsets
+                    p_lat = click_lat + ((r - rows/2) * 0.000022)
+                    p_lon = click_lon + ((c - cols/2) * 0.000022)
                     
-                    bounds = [[p_lat, p_lon], [p_lat + 0.000020, p_lon + 0.000020]]
+                    bounds = [[p_lat, p_lon], [p_lat + 0.000018, p_lon + 0.000018]]
                     
                     folium.Rectangle(
                         bounds=bounds,
@@ -362,18 +361,18 @@ if panels_count > 0 and roof_sqft > 0:
                         fill=True,
                         fill_color="#0284C7",
                         fill_opacity=0.85,
-                        popup=f"Solar Panel #{placed_count + 1} (550W)",
-                        tooltip=f"Panel #{placed_count + 1}"
+                        tooltip=f"Solar Panel #{placed_count + 1} (550W)"
                     ).add_to(viz_map)
                     placed_count += 1
 
-        # Display Final Visualized Map with unique key
+        # Render Map with unique key to force instant reload on click
         st_folium(viz_map, height=500, width=900, key=f"viz_map_{click_lat}_{click_lon}")
         
         if is_clicked:
             st.success(f"🎉 **{placed_count} Solar Panels placed at Coordinates:** Lat `{click_lat:.6f}`, Lon `{click_lon:.6f}`")
         else:
             st.info("💡 Click on your rooftop above to position the solar panel layout!" if lang == "English" else "💡 আপনার ছাদের সঠিক স্থানে প্যানেল বসাতে ওপরের ম্যাপে ক্লিক করুন!")
+
 st.markdown("---")
 
 # ==========================================
