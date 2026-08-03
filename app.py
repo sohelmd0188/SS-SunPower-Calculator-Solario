@@ -62,15 +62,15 @@ div[data-testid="stMetric"] * {
 API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
 
 # ==========================================
-# 2. Header & Hero Banner Section (Universal Theme Compatible)
+# Header & Hero Banner Section (Universal Theme Compatible)
 # ==========================================
 
 st.markdown("""
 <style>
-/* Universal Hero Banner with Dynamic Background Image */
+/* Universal Hero Banner with Guaranteed Background Image */
 .hero-container {
     background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
-                url('http://googleusercontent.com/image_generation_content/5470592169624298758.png');
+                url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=1200&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
     border-radius: 16px;
