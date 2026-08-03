@@ -2,5 +2,7 @@ streamlit
 pandas
 plotly
 requests
-folium
 streamlit-folium
+folium
+matplotlib
+numpy
