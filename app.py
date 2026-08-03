@@ -79,8 +79,8 @@ st.sidebar.markdown("---")
 st.sidebar.header("⚙️ 3. Solar System Type")
 system_type = st.sidebar.radio("Select System Type:", ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"])
 
-# OpenWeatherMap API Key (Set your key here if available)
-API_KEY = "YOUR_OPENWEATHERMAP_API_KEY"
+# OpenWeatherMap API Key
+API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
 
 # ==========================================
 # 4. Backend Logic & Calculations
@@ -178,34 +178,84 @@ st.markdown("---")
 # ==========================================
 # 7. Live Weather Solar Tracker Section
 # ==========================================
+# ==========================================
+# 7. Live Weather Solar Tracker Section
+# ==========================================
 st.subheader("🌦️ Live Weather-Based Solar Tracker")
-city = st.text_input("Enter City Name:", value="Dhaka")
 
-if st.button("Check Live Solar Output"):
-    if API_KEY == "YOUR_OPENWEATHERMAP_API_KEY":
-        st.info("💡 **Simulation Mode:** No OpenWeatherMap API Key provided. Displaying sample weather data below:")
-        cloudiness = 25  # 25% sample cloud coverage
-        temp = 32
-        weather_desc = "Few Clouds"
-    else:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
-        res = requests.get(url)
-        if res.status_code == 200:
-            data = res.json()
-            cloudiness = data['clouds']['all']
-            temp = data['main']['temp']
-            weather_desc = data['weather'][0]['description'].title()
+# Option to choose between City Name or Automatic GPS Location
+track_type = st.radio("Select Location Mode:", ["By City Name", "Auto-Detect My Current Location"], horizontal=True)
+
+if track_type == "By City Name":
+    city = st.text_input("Enter City Name:", value="Dhaka")
+    if st.button("Check Live Solar Output"):
+        if API_KEY == "" or API_KEY == "YOUR_OPENWEATHERMAP_API_KEY":
+            st.info("💡 **Simulation Mode:** No OpenWeatherMap API Key provided.")
+            cloudiness = 25
+            temp = 32
+            weather_desc = "Few Clouds"
         else:
-            st.error("City not found!")
-            cloudiness = None
+            url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+            res = requests.get(url)
+            if res.status_code == 200:
+                data = res.json()
+                cloudiness = data['clouds']['all']
+                temp = data['main']['temp']
+                weather_desc = data['weather'][0]['description'].title()
+            else:
+                st.error("City not found or API Key activation pending!")
+                cloudiness = None
 
-    if cloudiness is not None:
-        efficiency = 1.0 - ((cloudiness / 100.0) * 0.80)
-        current_kw = solar_kwp * efficiency
+        if cloudiness is not None:
+            efficiency = 1.0 - ((cloudiness / 100.0) * 0.80)
+            current_kw = solar_kwp * efficiency
+            
+            w1, w2, w3 = st.columns(3)
+            w1.metric("Temperature", f"{temp} °C")
+            w2.metric("Cloudiness", f"{cloudiness}%")
+            w3.metric("Condition", weather_desc)
+            st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
+
+else:
+    st.info("📍 HTML5 / IP Geolocation Mode Selected")
+    # Fetch user location automatically via free IP-Geolocation API
+    try:
+        geo_res = requests.get('https://ipapi.co/json/').json()
+        lat = geo_res.get('latitude')
+        lon = geo_res.get('longitude')
+        detected_city = geo_res.get('city', 'Your Location')
         
-        w1, w2, w3 = st.columns(3)
-        w1.metric("Temperature", f"{temp} °C")
-        w2.metric("Cloudiness", f"{cloudiness}%")
-        w3.metric("Condition", weather_desc)
+        st.write(f"📌 **Detected Location:** {detected_city} (Lat: {lat}, Lon: {lon})")
+        
+        if st.button("Check Live Solar Output for My Location"):
+            if API_KEY == "" or API_KEY == "YOUR_OPENWEATHERMAP_API_KEY":
+                st.info("💡 Simulation Mode Active")
+                cloudiness = 20
+                temp = 30
+                weather_desc = "Clear Sky"
+            else:
+                # OpenWeatherMap API call using Latitude and Longitude
+                url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+                res = requests.get(url)
+                if res.status_code == 200:
+                    data = res.json()
+                    cloudiness = data['clouds']['all']
+                    temp = data['main']['temp']
+                    weather_desc = data['weather'][0]['description'].title()
+                else:
+                    st.error("Error fetching weather for coordinates!")
+                    cloudiness = None
+
+            if cloudiness is not None:
+                efficiency = 1.0 - ((cloudiness / 100.0) * 0.80)
+                current_kw = solar_kwp * efficiency
+                
+                w1, w2, w3 = st.columns(3)
+                w1.metric("Temperature", f"{temp} °C")
+                w2.metric("Cloudiness", f"{cloudiness}%")
+                w3.metric("Condition", weather_desc)
+                st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
+    except Exception as e:
+        st.error("Could not auto-detect location. Please use City Name option.")
         
         st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
