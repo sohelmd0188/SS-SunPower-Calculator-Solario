@@ -299,21 +299,34 @@ if panels_count > 0 and roof_sqft > 0:
         view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
         st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state, tooltip={"text": "Roof & Solar Panel Array"}))
 
-    # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
+  # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
     elif "Level 3" in cad_mode:
-        st.info("🗺️ **How to use:** Zoom into the Google Satellite Map, find your home/building, and **CLICK on your roof** to instantly place the {0} solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** স্যাটেলাইট ম্যাপে জুম করে আপনার বাসা/বিল্ডিং খুঁজে বের করুন এবং **আপনার ছাদের ওপর ক্লিক করুন**। সাথে সাথে আপনার ছাদ অনুযায়ী {panels_count}টি সোলার প্যানেল সেখানে বসে যাবে!")
+        st.info("🗺️ **How to use:** Enter your coordinates or zoom into the Google Satellite Map, find your home/building, and **CLICK on your roof** to instantly place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** আপনার ল্যাটিটিউড-লংটিটিউড লিখুন অথবা স্যাটেলাইট ম্যাপে জুম করে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে আপনার ছাদ অনুযায়ী {panels_count}টি সোলার প্যানেল সেখানে বসে যাবে!")
         
-        # Interactive Folium Satellite Map
+        # Latitude & Longitude Input Selection (Level 3)
+        c1, c2 = st.columns(2)
+        base_lat = c1.number_input("Latitude", value=23.8103, format="%.6f", key="sat_lat")
+        base_lon = c2.number_input("Longitude", value=90.4125, format="%.6f", key="sat_lon")
+
+        # Interactive Folium Satellite Map Centered on Selected Lat/Lon
         sat_map = folium.Map(
-            location=[23.8103, 90.4125], 
+            location=[base_lat, base_lon], 
             zoom_start=18, 
             tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
             attr='Google Satellite'
         )
         
+        # Add Marker at Input Coordinates
+        folium.Marker(
+            [base_lat, base_lon], 
+            tooltip="Selected Location",
+            icon=folium.Icon(color="red", icon="info-sign")
+        ).add_to(sat_map)
+
         folium.LatLngPopup().add_to(sat_map)
         sat_data = st_folium(sat_map, height=450, width=900)
         
+        # Check for User Click on Map
         if sat_data and sat_data.get("last_clicked"):
             click_lat = sat_data["last_clicked"]["lat"]
             click_lon = sat_data["last_clicked"]["lng"]
@@ -350,7 +363,6 @@ if panels_count > 0 and roof_sqft > 0:
                         
             st_folium(placed_map, height=450, width=900, key="solar_placed_map")
             st.success(f"🎉 **{placed_count} Solar Panels successfully placed on your roof!**" if lang == "English" else f"🎉 **আপনার ছাদের ওপর সফলভাবে {placed_count}টি সোলার প্যানেল প্লেস করা হয়েছে!**")
-
 st.markdown("---")
 
 # ==========================================
