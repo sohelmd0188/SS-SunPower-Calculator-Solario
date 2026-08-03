@@ -42,3 +42,15 @@ Make sure you have Python 3.8 or higher installed on your machine.
    ```bash
    git clone [https://github.com/sohelmd0188/SS-SunPower-Calculator-Solario.git](https://github.com/sohelmd0188/SS-SunPower-Calculator-Solario.git)
    cd SS-SunPower-Calculator-Solario
+
+2. **Install required packages:**
+   ```bash
+   pip install streamlit pandas plotly matplotlib numpy pydeck folium streamlit-folium requests
+
+3. **Run the Streamlit App:**
+   ```bash
+   streamlit run app.py
+
+ 👤 Author
+Mohammad Sohel
+GitHub: @sohelmd0188
