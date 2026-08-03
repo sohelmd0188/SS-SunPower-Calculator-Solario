@@ -64,8 +64,8 @@ div[data-testid="stMetricValue"] {
 
 /* Universal Hero Banner */
 .hero-container {
-    background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.90)), 
-                url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=1200&auto=format&fit=crop');
+    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)), 
+                url('http://googleusercontent.com/image_generation_content/5470592169624298758.png');
     background-size: cover;
     background-position: center;
     border-radius: 16px;
