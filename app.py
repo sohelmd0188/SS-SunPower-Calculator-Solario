@@ -251,6 +251,9 @@ inverter_kva = (surge_watts * 1.25) / 1000
 solar_kwp = (daily_wh / 4.0 / 0.85) / 1000 if daily_wh > 0 else 0
 panels_count = math.ceil((solar_kwp * 1000) / 550) if solar_kwp > 0 else 0
 
+# Required roof area calculation (1 kWp needs approx 100 Sq. Ft)
+required_roof_sqft = math.ceil(solar_kwp * 100)
+
 panel_unit_price = 28 * brand_multiplier if "Tier-1" in panel_brand else 25
 panel_cost = (panels_count * 550) * panel_unit_price
 
@@ -283,25 +286,27 @@ payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
 # ==========================================
 # 5. Main Dashboard Rendering Metrics
 # ==========================================
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 col1.metric("Running Load" if lang == "English" else "চলমান লোড", f"{running_watts} W")
 col2.metric("Peak Surge Load" if lang == "English" else "সর্বোচ্চ স্টার্ট লোড", f"{surge_watts:.0f} W")
 col3.metric("Daily Usage" if lang == "English" else "দৈনিক ব্যবহার", f"{daily_kwh:.2f} kWh")
-col4.metric("Total Budget" if lang == "English" else "মোট বাজেট", f"BDT {total_cost:,.0f}")
+col4.metric("Required Roof Area" if lang == "English" else "প্রয়োজনীয় ছাদের আয়তন", f"~{required_roof_sqft} Sq. Ft")
+col5.metric("Total Budget" if lang == "English" else "মোট বাজেট", f"BDT {total_cost:,.0f}")
 
 st.markdown("---")
 
 if solar_kwp > max_possible_kwp:
     if lang == "English":
-        st.warning(f"⚠️ **Roof Space Notice:** Your required system ({solar_kwp:.2f} kWp) needs ~{solar_kwp*100:.0f} Sq. Ft. Your roof is {roof_sqft} Sq. Ft (Max capacity: ~{max_possible_kwp:.2f} kWp).")
+        st.warning(f"⚠️ **Roof Space Notice:** Your required system ({solar_kwp:.2f} kWp) needs ~{required_roof_sqft} Sq. Ft. Your roof is {roof_sqft} Sq. Ft (Max capacity: ~{max_possible_kwp:.2f} kWp).")
     else:
-        st.warning(f"⚠️ **ছাদের জায়গার সতর্কতা:** আপনার প্রয়োজনীয় সিস্টেমের ({solar_kwp:.2f} kWp) জন্য অন্তত ~{solar_kwp*100:.0f} বর্গফুট ছাদ প্রয়োজন। আপনার দেওয়া ছাদের ক্ষেত্রফল {roof_sqft} বর্গফুট (সর্বোচ্চ ক্ষমতা: ~{max_possible_kwp:.2f} kWp)।")
+        st.warning(f"⚠️ **ছাদের জায়গার সতর্কতা:** আপনার প্রয়োজনীয় সিস্টেমের ({solar_kwp:.2f} kWp) জন্য অন্তত ~{required_roof_sqft} বর্গফুট ছাদ প্রয়োজন। আপনার দেওয়া ছাদের ক্ষেত্রফল {roof_sqft} বর্গফুট (সর্বোচ্চ ক্ষমতা: ~{max_possible_kwp:.2f} kWp)।")
 
 c1, c2 = st.columns(2)
 with c1:
     st.subheader("📋 System Specifications & Brands" if lang == "English" else "📋 যন্ত্রপাতির বিবরণ ও ব্র্যান্ড")
     st.info(f"⚡ **Inverter / ইনভার্টার:** {max(3, round(inverter_kva))} KVA/KW ({inverter_brand})")
     st.info(f"☀️ **Solar Panels / প্যানেল:** {solar_kwp:.2f} kWp ({panels_count}x 550W - {panel_brand})")
+    st.info(f"🏠 **Roof Space Needed / ছাদের জায়গা:** ~{required_roof_sqft} Sq. Ft (Available: {roof_sqft} Sq. Ft)")
     if "With Battery" in system_type:
         st.info(f"🔋 **Battery / ব্যাটারি:** {battery_ah:.0f} Ah 48V ({battery_type})")
     else:
