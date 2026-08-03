@@ -117,7 +117,7 @@ if lang == "English":
     st.markdown("""
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
-        <div class="hero-title">Smart Commercial Solar Calculator & Dashboard</div>
+        <div class="hero-title">Smart Commercial Solar Calculator & Dashboard (Solario)</div>
         <div class="hero-subtitle">Calculate household/industrial solar load, ROI, equipment brands, and real-time solar output.</div>
     </div>
     """, unsafe_allow_html=True)
