@@ -175,27 +175,31 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
 
-# ==========================================
-# 7. Live Weather Solar Tracker Section
-# ==========================================
+
 # ==========================================
 # 7. Live Weather Solar Tracker Section
 # ==========================================
 st.subheader("🌦️ Live Weather-Based Solar Tracker")
 
-# Option to choose between City Name or Automatic GPS Location
-track_type = st.radio("Select Location Mode:", ["By City Name", "Auto-Detect My Current Location"], horizontal=True)
+# Select Location Mode
+track_type = st.radio("Select Location Mode:", ["Bangladesh City List", "Select Location on Map"], horizontal=True)
 
-if track_type == "By City Name":
-    city = st.text_input("Enter City Name:", value="Dhaka")
+if track_type == "Bangladesh City List":
+    bd_cities = [
+        "Dhaka", "Chittagong", "Sylhet", "Rajshahi", 
+        "Khulna", "Barishal", "Rangpur", "Mymensingh", 
+        "Cox's Bazar", "Cumilla", "Gazipur"
+    ]
+    selected_city = st.selectbox("Select a City in Bangladesh:", bd_cities)
+    
     if st.button("Check Live Solar Output"):
         if API_KEY == "" or API_KEY == "YOUR_OPENWEATHERMAP_API_KEY":
-            st.info("💡 **Simulation Mode:** No OpenWeatherMap API Key provided.")
+            st.info("💡 **Simulation Mode Active**")
             cloudiness = 25
             temp = 32
             weather_desc = "Few Clouds"
         else:
-            url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+            url = f"http://api.openweathermap.org/data/2.5/weather?q={selected_city},BD&appid={API_KEY}&units=metric"
             res = requests.get(url)
             if res.status_code == 200:
                 data = res.json()
@@ -203,7 +207,7 @@ if track_type == "By City Name":
                 temp = data['main']['temp']
                 weather_desc = data['weather'][0]['description'].title()
             else:
-                st.error("City not found or API Key activation pending!")
+                st.error("Error fetching weather data!")
                 cloudiness = None
 
         if cloudiness is not None:
@@ -214,27 +218,33 @@ if track_type == "By City Name":
             w1.metric("Temperature", f"{temp} °C")
             w2.metric("Cloudiness", f"{cloudiness}%")
             w3.metric("Condition", weather_desc)
-            st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
+            st.success(f"⚡ **Estimated Live Output for {selected_city}:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
 
 else:
-    st.info("📍 HTML5 / IP Geolocation Mode Selected")
-    # Fetch user location automatically via free IP-Geolocation API
-    try:
-        geo_res = requests.get('https://ipapi.co/json/').json()
-        lat = geo_res.get('latitude')
-        lon = geo_res.get('longitude')
-        detected_city = geo_res.get('city', 'Your Location')
+    st.info("🗺️ **Click anywhere on the map to pick a location:**")
+    
+    import folium
+    from streamlit_folium import st_folium
+
+    # Center map on Bangladesh (Dhaka)
+    m = folium.Map(location=[23.8103, 90.4125], zoom_start=7)
+    folium.LatLngPopup().add_to(m)  # Allows clicking on map to get coordinates
+
+    map_data = st_folium(m, height=350, width=700)
+
+    if map_data and map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lon = map_data["last_clicked"]["lng"]
         
-        st.write(f"📌 **Detected Location:** {detected_city} (Lat: {lat}, Lon: {lon})")
+        st.write(f"📌 **Selected Location:** Lat {lat:.4f}, Lon {lon:.4f}")
         
-        if st.button("Check Live Solar Output for My Location"):
+        if st.button("Check Live Solar Output for Selected Location"):
             if API_KEY == "" or API_KEY == "YOUR_OPENWEATHERMAP_API_KEY":
                 st.info("💡 Simulation Mode Active")
                 cloudiness = 20
                 temp = 30
                 weather_desc = "Clear Sky"
             else:
-                # OpenWeatherMap API call using Latitude and Longitude
                 url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
                 res = requests.get(url)
                 if res.status_code == 200:
@@ -242,6 +252,7 @@ else:
                     cloudiness = data['clouds']['all']
                     temp = data['main']['temp']
                     weather_desc = data['weather'][0]['description'].title()
+                    location_name = data.get('name', 'Selected Map Location')
                 else:
                     st.error("Error fetching weather for coordinates!")
                     cloudiness = None
@@ -255,7 +266,3 @@ else:
                 w2.metric("Cloudiness", f"{cloudiness}%")
                 w3.metric("Condition", weather_desc)
                 st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
-    except Exception as e:
-        st.error("Could not auto-detect location. Please use City Name option.")
-        
-        st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (System Efficiency: {efficiency*100:.1f}%)")
