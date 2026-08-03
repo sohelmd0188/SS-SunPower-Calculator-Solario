@@ -21,12 +21,26 @@ div[data-testid="stMetric"] {
     border-left: 5px solid #F59E0B;
 }
 
-/* Force dark color for label and numbers inside metric box */
+/* Force dark text for metric box */
 div[data-testid="stMetric"] * {
     color: #0F172A !important;
 }
 
 .stButton>button {
+    width: 100%;
+    background-color: #F59E0B;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+}
+.stButton>button:hover {
+    background-color: #D97706;
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True).stButton>button {
     width: 100%;
     background-color: #F59E0B;
     color: white;
