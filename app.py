@@ -64,7 +64,7 @@ if lang == "English":
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
         <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine </div>
-        <div class="hero-subtitle">Advanced calculations with 2D/3D CAD Layout, Weather API, Engineering Studio, Cash Flow, and BOQ Projections.</div>
+        <div class="hero-subtitle">Advanced calculations with 2D/3D Interactive Map CAD Layout, Weather API, Engineering Studio, Cash Flow, and BOQ Projections.</div>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -72,7 +72,7 @@ else:
     <div class="hero-container">
         <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
         <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
-        <div class="hero-subtitle">২ডি/থ্রিডি ক্যাড লেআউট, আবহাওয়া সিমুলেশন, ইঞ্জিনিয়ারিং স্টুডিও, ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
+        <div class="hero-subtitle">লাইভ ম্যাপ ইন্টিগ্রেশন, ২ডি/থ্রিডি ক্যাড লেআউট, আবহাওয়া সিমুলেশন, ইঞ্জিনিয়ারিং স্টুডিও, ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -169,7 +169,7 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
 
 st.sidebar.markdown("---")
 
-# Add Extra Appliance Section (Placed right after Heavy Loads)
+# Add Extra Appliance Section
 st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
 selected_extra = st.sidebar.selectbox(
     "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
@@ -279,11 +279,11 @@ col4.metric("Total Investment" if lang == "English" else "মোট বাজে
 st.markdown("---")
 
 # ==========================================
-# 6. Advanced Modules: 24-Hour Simulation & CAD/Layout
+# 6. Advanced Modules: 24-Hour Simulation & Interactive 2D/3D Map CAD Layout
 # ==========================================
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 24-Hr Generation / উৎপাদন সিমুলেশন", 
-    "🗺️ CAD Layout & Roof / ক্যাড ও ছাদের বিন্যাস", 
+    "🗺️ Interactive Live Map & 2D/3D CAD Layout / লাইভ ম্যাপ ও ক্যাড লেআউট", 
     "⚡ Engineering Studio / ইঞ্জিনিয়ারিং স্টুডিও", 
     "📈 Cash Flow & Proposal / ক্যাশ ফ্লো ও প্রপোজাল"
 ])
@@ -299,25 +299,62 @@ with tab1:
     st.plotly_chart(fig_gen, use_container_width=True)
 
 with tab2:
-    st.subheader("Rooftop Space & Panel CAD Layout Assessment" if lang == "English" else "ছাদের ক্ষেত্রফল ও প্যানেল ক্যাড লেআউট বিশ্লেষণ")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.info(f"📍 **Required Roof Area:** {required_roof_sqft} Sq. Ft")
-        st.info(f"📍 **Available Roof Area:** {roof_sqft} Sq. Ft")
-        if roof_sqft < required_roof_sqft:
-            st.error("⚠️ Warning: Available roof area is less than required!" if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
-        else:
-            st.success("✅ Roof area is sufficient for this installation capacity." if lang == "English" else "✅ এই সিস্টেমের জন্য ছাদের জায়গা যথেষ্ট রয়েছে।")
-    with col_b:
-        if panels_count > 0:
-            cols_grid = max(1, math.ceil(math.sqrt(panels_count)))
-            x_coords = [i % cols_grid for i in range(panels_count)]
-            y_coords = [i // cols_grid for i in range(panels_count)]
-            df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords})
-            fig_cad = px.scatter(df_cad, x="X", y="Y", title="Simulated Panel Placement Layout (550W Modules)" if lang == "English" else "সিমুলেটেড প্যানেল লেআউট গ্রিড", symbol_sequence=['square'])
-            fig_cad.update_traces(marker=dict(size=15, color='#F59E0B'))
-            fig_cad.update_layout(template="plotly_dark", xaxis_title="Array Width", yaxis_title="Array Length")
-            st.plotly_chart(fig_cad, use_container_width=True)
+    st.subheader("Interactive Live Map Location & 2D/3D Rooftop CAD Layout" if lang == "English" else "লাইভ ম্যাপ লোকেশন ও ২ডি/থ্রিডি ছাদের ক্যাড লেআউট")
+    
+    # Live Map & Location Setting
+    col_map_opt1, col_map_opt2 = st.columns(2)
+    with col_map_opt1:
+        map_city = st.selectbox("Select Project City / Location:" if lang == "English" else "প্রজেক্টের শহর বা লোকেশন:", 
+                                ["Chattogram (Default)", "Dhaka", "Sylhet", "Rajshahi", "Khulna", "Barishal", "Rangpur"])
+    with col_map_opt2:
+        view_mode = st.radio("Select View Mode:" if lang == "English" else "ভিউ মোড নির্বাচন করুন:", ["2D Top-Down View", "3D Isometric View", "Live Satellite Map Grid"], horizontal=True)
+
+    # City Coordinates mapping for Live Map
+    city_coords = {
+        "Chattogram (Default)": {"lat": 22.3569, "lon": 91.7832},
+        "Dhaka": {"lat": 23.8103, "lon": 90.4125},
+        "Sylhet": {"lat": 24.8949, "lon": 91.8687},
+        "Rajshahi": {"lat": 24.3745, "lon": 88.6042},
+        "Khulna": {"lat": 22.8456, "lon": 89.5403},
+        "Barishal": {"lat": 22.7010, "lon": 90.3535},
+        "Rangpur": {"lat": 25.7439, "lon": 89.2752}
+    }
+    lat = city_coords[map_city]["lat"]
+    lon = city_coords[map_city]["lon"]
+
+    if view_mode == "Live Satellite Map Grid":
+        st.info(f"📍 Showing live map region for **{map_city}** (Lat: {lat}, Lon: {lon}) with simulated rooftop boundaries.")
+        df_map = pd.DataFrame({'lat': [lat], 'lon': [lon], 'name': [f"{map_city} Project Rooftop"]})
+        st.map(df_map, zoom=14)
+    else:
+        col_a, col_b = st.columns([1, 1.2])
+        with col_a:
+            st.info(f"📍 **Required Roof Area:** {required_roof_sqft} Sq. Ft")
+            st.info(f"📍 **Available Roof Area:** {roof_sqft} Sq. Ft")
+            st.info(f"📐 **Tilt Alignment Angle:** {tilt_angle}° facing South")
+            if roof_sqft < required_roof_sqft:
+                st.error("⚠️ Warning: Available roof area is less than required!" if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
+            else:
+                st.success("✅ Roof area is sufficient for this installation capacity." if lang == "English" else "✅ এই সিস্টেমের জন্য ছাদের জায়গা যথেষ্ট রয়েছে।")
+        
+        with col_b:
+            if panels_count > 0:
+                cols_grid = max(1, math.ceil(math.sqrt(panels_count)))
+                x_coords = [i % cols_grid for i in range(panels_count)]
+                y_coords = [i // cols_grid for i in range(panels_count)]
+                
+                if view_mode == "3D Isometric View":
+                    z_coords = [math.sin(math.radians(tilt_angle)) * (i // cols_grid) for i in range(panels_count)]
+                    df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords, "Z": z_coords})
+                    fig_cad = px.scatter_3d(df_cad, x="X", y="Y", z="Z", title=f"3D Isometric Rooftop Panel Grid ({panels_count} Modules)" if lang == "English" else f"থ্রিডি ছাদের সোলার প্যানেল বিন্যাস ({panels_count} পিস)")
+                    fig_cad.update_traces(marker=dict(size=8, color='#F59E0B'))
+                else:
+                    df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords})
+                    fig_cad = px.scatter(df_cad, x="X", y="Y", title=f"2D Top-Down Rooftop Grid ({panels_count} Modules)" if lang == "English" else f"টুডি ছাদের সোলার প্যানেল গ্রিড ({panels_count} পিস)", symbol_sequence=['square'])
+                    fig_cad.update_traces(marker=dict(size=16, color='#F59E0B'))
+                
+                fig_cad.update_layout(template="plotly_dark", margin=dict(l=10, r=10, t=40, b=10))
+                st.plotly_chart(fig_cad, use_container_width=True)
 
 with tab3:
     st.subheader("Advanced Engineering & Protection Studio (BNBC & NFPA)" if lang == "English" else "অ্যাডভান্সড ইঞ্জিনিয়ারিং ও প্রটেকশন স্টুডিও (BNBC ও NFPA মানদণ্ড)")
