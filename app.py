@@ -574,7 +574,7 @@ eng_tabs = st.tabs([
     "📋 Bill of Quantities (BOQ)" if lang == "English" else "📋 সামগ্রীর তালিকা ও বাজেট (BOQ)"
 ])
 
-# --- TAB 1: SLD (Built-in Streamlit Graphviz without import graphviz module crash) ---
+# --- TAB 1: SLD ---
 with eng_tabs[0]:
     st.write("#### Dynamic Electrical SLD Layout" if lang == "English" else "#### ডায়নামিক ইলেকট্রিক্যাল SLD লেআউট")
     
@@ -756,8 +756,116 @@ else:
             else:
                 st.error("Error fetching weather data for coordinates!")
 
+st.markdown("---")
+
 # ==========================================
-# 10. Footer Section
+# 11. Professional Project Report Generation & Export
+# ==========================================
+st.subheader("📄 Automated Project Proposal & Report Generator" if lang == "English" else "📄 স্বয়ংক্রিয় প্রজেক্ট প্রপোজাল ও রিপোর্ট জেনারেটর")
+st.caption("Generate an official PDF/Print-ready engineering proposal" if lang == "English" else "অফিসিয়াল পিডিএফ/প্রিন্ট উপযোগী ইঞ্জিনিয়ারিং প্রপোজাল তৈরি করুন")
+
+client_name = st.text_input("Client / Project Name:" if lang == "English" else "গ্রাহক/প্রজেক্টের নাম:", value="Solario Demo Project")
+
+if st.button("📥 Generate & View Official Proposal Report" if lang == "English" else "📥 প্রপোজাল রিপোর্ট তৈরি করে দেখুন", use_container_width=True):
+    report_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Solar System Engineering Proposal</title>
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1E293B; margin: 20px; }}
+            .header {{ text-align: center; border-bottom: 3px solid #F59E0B; padding-bottom: 10px; margin-bottom: 20px; }}
+            .title {{ font-size: 24px; font-weight: bold; color: #0F172A; margin: 0; }}
+            .subtitle {{ font-size: 14px; color: #64748B; margin-top: 5px; }}
+            .section-title {{ font-size: 16px; font-weight: bold; color: #F59E0B; background: #FEF3C7; padding: 6px 10px; border-left: 4px solid #F59E0B; margin-top: 20px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
+            th, td {{ border: 1px solid #CBD5E1; padding: 8px 12px; text-align: left; }}
+            th {{ background-color: #F1F5F9; font-weight: bold; }}
+            .summary-box {{ display: flex; justify-content: space-between; margin-top: 15px; font-size: 14px; }}
+            .summary-card {{ background: #F8FAFC; border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px; width: 48%; box-sizing: border-box; }}
+            .total-row {{ font-weight: bold; background-color: #FEF3C7; }}
+            .footer {{ margin-top: 30px; text-align: center; font-size: 11px; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 10px; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="title">SOLAR ENERGY SYSTEM PROPOSAL</div>
+            <div class="subtitle">Solario • Next-Gen Smart Solar CAD & ROI Engine</div>
+        </div>
+        
+        <p><strong>Project / Client:</strong> {client_name}</p>
+        <p><strong>System Type:</strong> {system_type}</p>
+        
+        <div class="section-title">1. System Executive Summary</div>
+        <div class="summary-box">
+            <div class="summary-card">
+                <strong>Connected Load:</strong> {running_watts} W<br>
+                <strong>Peak Surge Load:</strong> {surge_watts:.0f} W<br>
+                <strong>Daily Energy Consumption:</strong> {daily_kwh:.2f} kWh
+            </div>
+            <div class="summary-card">
+                <strong>Recommended Solar PV:</strong> {solar_kwp:.2f} kWp ({panels_count}x 550W - {panel_brand})<br>
+                <strong>Inverter Capacity:</strong> {max(3, round(inverter_kva))} KVA ({inverter_brand})<br>
+                <strong>Roof Space Required:</strong> ~{required_roof_sqft} Sq. Ft
+            </div>
+        </div>
+
+        <div class="section-title">2. Financial ROI & Savings Estimation</div>
+        <table>
+            <tr><th>Metric</th><th>Details / Amount</th></tr>
+            <tr><td>Total System Budget</td><td><strong>BDT {total_cost:,.0f}</strong></td></tr>
+            <tr><td>Estimated Monthly Savings</td><td>BDT {monthly_savings:,.0f} / Month</td></tr>
+            <tr><td>Estimated Annual Savings</td><td>BDT {yearly_savings:,.0f} / Year</td></tr>
+            <tr><td>Payback Period (ROI)</td><td><strong>~{payback_years:.1f} Years</strong></td></tr>
+        </table>
+
+        <div class="section-title">3. Bill of Quantities (BOQ)</div>
+        <table>
+            <tr>
+                <th>Item Description</th>
+                <th>Quantity</th>
+                <th>Estimated Cost (BDT)</th>
+            </tr>
+            <tr><td>Solar PV Modules (550W Tier-1)</td><td>{panels_count} Pcs</td><td>BDT {panel_cost:,.0f}</td></tr>
+            <tr><td>Solar Inverter ({max(3, round(inverter_kva))} KVA)</td><td>1 Unit</td><td>BDT {inverter_cost:,.0f}</td></tr>
+            <tr><td>Solar Cable & Armored Wiring</td><td>{cable_dist * 2} Meters</td><td>BDT {cable_dist * 2 * 180:,.0f}</td></tr>
+            <tr><td>Rooftop Mounting Structure</td><td>1 Set</td><td>BDT {panels_count * 2500:,.0f}</td></tr>
+            <tr><td>DC/AC Protection Boxes + SPD + Breakers</td><td>1 Set</td><td>BDT 18,000</td></tr>
+            <tr><td>Earthing Rods & Cable Trays</td><td>2 Sets</td><td>BDT 14,000</td></tr>
+            <tr><td>Engineering & Installation Charge</td><td>1 Job</td><td>BDT {installation_cost:,.0f}</td></tr>
+            <tr class="total-row">
+                <td colspan="2">Total Project Cost</td>
+                <td>BDT {df_boq_table['Est. Price (BDT)'].sum():,.0f}</td>
+            </tr>
+        </table>
+
+        <div class="section-title">4. Engineering Standards & Compliance</div>
+        <p style="font-size: 12px; color: #475569;">
+            • Compliant with BNBC-2020 & NFPA-70 (NEC) guidelines.<br>
+            • Dual earthing protection system for equipment and lightning arrestor.<br>
+            • Voltage drop kept within 3% limit for optimal generation efficiency.
+        </p>
+
+        <div class="footer">
+            Generated via Solario CAD Engine • Designed by Mohammad Sohel
+        </div>
+    </body>
+    </html>
+    """
+
+    st.markdown("### 📜 Official Proposal Preview")
+    st.components.v1.html(report_html, height=600, scrolling=True)
+
+    st.download_button(
+        label="📥 Download HTML Report (Print to PDF)" if lang == "English" else "📥 রিপোর্ট ডাউনলোড করুন (পিডিএফ প্রিন্ট করুন)",
+        data=report_html,
+        file_name=f"Solar_Proposal_{client_name.replace(' ', '_')}.html",
+        mime="text/html"
+    )
+
+# ==========================================
+# 12. Footer Section
 # ==========================================
 st.markdown("---")
 st.markdown(
