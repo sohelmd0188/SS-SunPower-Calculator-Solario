@@ -23,7 +23,6 @@ st.set_page_config(
 # Custom CSS for Clear Visibility & Universal Day/Night Contrast
 st.markdown("""
 <style>
-/* Enhanced Metric Box Styling with High Contrast Day/Night Support */
 div[data-testid="stMetric"] {
     background-color: #1E293B !important;
     border-radius: 12px;
@@ -114,7 +113,7 @@ if lang == "English":
     st.markdown("""
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
-        <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine </div>
+        <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine</div>
         <div class="hero-subtitle">Transform rooftops into clean energy powerhouses — Calculate solar load, 3D CAD, and live weather output.</div>
     </div>
     """, unsafe_allow_html=True)
@@ -132,7 +131,6 @@ st.markdown("---")
 # ==========================================
 # 3. Sidebar Inputs & Categorized Appliances
 # ==========================================
-
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
         "Ceiling Fan (75W)": {"watt": 75, "qty": 5, "type": "regular", "hours": 8.0},
@@ -216,7 +214,7 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
 
 st.sidebar.markdown("---")
 
-# Add Extra Appliance Section (Placed right after Heavy Loads)
+# Add Extra Appliance Section
 st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
 selected_extra = st.sidebar.selectbox(
     "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
@@ -248,23 +246,35 @@ avg_running_hours = st.sidebar.slider(
 st.sidebar.markdown("---")
 st.sidebar.header("⚙️ 3. Equipment & Brand Selection" if lang == "English" else "⚙️ ৩. যন্ত্রপাতি ও ব্র্যান্ড নির্বাচন")
 
-system_type = st.sidebar.radio("Select System Type:" if lang == "English" else "সিস্টেম টাইপ নির্বাচন করুন:", 
-                               ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"])
+system_type = st.sidebar.radio(
+    "Select System Type:" if lang == "English" else "সিস্টেম টাইপ নির্বাচন করুন:", 
+    ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"]
+)
 
-panel_brand = st.sidebar.selectbox("Solar Panel Brand:" if lang == "English" else "সোলার প্যানেল ব্র্যান্ড:", 
-                                  ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Canadian Solar", "Standard Brand"])
-inverter_brand = st.sidebar.selectbox("Inverter Brand:" if lang == "English" else "ইনভার্টার ব্র্যান্ড:", 
-                                     ["Growatt", "Deye", "Huawei", "Must / Standard"])
+panel_brand = st.sidebar.selectbox(
+    "Solar Panel Brand:" if lang == "English" else "সোলার প্যানেল ব্র্যান্ড:", 
+    ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Canadian Solar", "Standard Brand"]
+)
+inverter_brand = st.sidebar.selectbox(
+    "Inverter Brand:" if lang == "English" else "ইনভার্টার ব্র্যান্ড:", 
+    ["Growatt", "Deye", "Huawei", "Must / Standard"]
+)
 
 if "With Battery" in system_type:
-    battery_type = st.sidebar.selectbox("Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
-                                        ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"])
+    battery_type = st.sidebar.selectbox(
+        "Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
+        ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"]
+    )
 
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
 
 st.sidebar.markdown("---")
 st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
-roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
+roof_sqft = st.sidebar.number_input(
+    "Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", 
+    min_value=0, 
+    value=300
+)
 max_possible_kwp = (roof_sqft / 100) * 1.0
 
 # ==========================================
@@ -545,9 +555,11 @@ generation_curve = [0, 0, 0, 0, 0, 0, 0.1, 0.3, 0.6, 0.85, 0.95, 1.0, 0.98, 0.90
 power_output = [solar_kwp * factor for factor in generation_curve]
 
 df_solar = pd.DataFrame({'Time': [f"{h:02d}:00" for h in hours], 'Generation (kW)': power_output})
-fig = px.area(df_solar, x='Time', y='Generation (kW)', 
-              title=f"Estimated Daily Solar Generation Curve ({solar_kwp:.2f} kWp System)" if lang == "English" else f"দৈনিক আনুমানিক বিদ্যুৎ উৎপাদন গ্রাফ ({solar_kwp:.2f} kWp System)",
-              color_discrete_sequence=['#F59E0B'])
+fig = px.area(
+    df_solar, x='Time', y='Generation (kW)', 
+    title=f"Estimated Daily Solar Generation Curve ({solar_kwp:.2f} kWp System)" if lang == "English" else f"দৈনিক আনুমানিক বিদ্যুৎ উৎপাদন গ্রাফ ({solar_kwp:.2f} kWp System)",
+    color_discrete_sequence=['#F59E0B']
+)
 fig.update_layout(template="plotly_dark", hovermode="x unified")
 st.plotly_chart(fig, use_container_width=True)
 
