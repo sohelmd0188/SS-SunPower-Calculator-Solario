@@ -9,6 +9,7 @@ import numpy as np
 import pydeck as pdk
 import folium
 from streamlit_folium import st_folium
+import graphviz
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -124,7 +125,7 @@ else:
     <div class="hero-container">
         <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
         <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
-        <div class="hero-subtitle">বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যান্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।</div>
+        <div class="hero-subtitle">বাসাবাড়ি বা শিল্প প্রতিষ্ঠানের সোলার লোড, আনুমানিক খরচ, ব্র্যান্ড ও রিয়েল-টাইম বিদ্যুৎ উৎপাদন হিসেব করুন।</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -176,7 +177,7 @@ if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তাল�
         st.sidebar.success(f"Added {selected_extra}!")
         st.rerun()
     else:
-        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
+        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("📝 Active Appliances" if lang == "English" else "📝 বর্তমান ব্যবহারের তালিকা")
@@ -204,7 +205,7 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
 
 st.sidebar.markdown("---")
 st.sidebar.header("⏱️ 2. Daily Usage (Hours)" if lang == "English" else "⏱️ ২. দৈনিক ব্যবহার (ঘণ্টা)")
-avg_running_hours = st.sidebar.slider("Avg Daily Running Hours" if lang == "English" else "দৈনিক গড় ব্যবহার (ঘণ্টা)", 1, 24, 8)
+avg_running_hours = st.sidebar.slider("Avg Daily Running Hours" if lang == "English" else "দৈনিক গড় ব্যবহার (ঘণ্টা)", 1, 24, 8)
 
 st.sidebar.markdown("---")
 st.sidebar.header("⚙️ 3. Equipment & Brand Selection" if lang == "English" else "⚙️ ৩. যন্ত্রপাতি ও ব্র্যান্ড নির্বাচন")
@@ -225,8 +226,8 @@ brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand
 
 # Roof Area Calculator Component
 st.sidebar.markdown("---")
-st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
-roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
+st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
+roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
 max_possible_kwp = (roof_sqft / 100) * 1.0
 
 # ==========================================
@@ -302,29 +303,29 @@ if solar_kwp > max_possible_kwp:
     if lang == "English":
         st.warning(f"⚠️ **Roof Space Notice:** Your required system ({solar_kwp:.2f} kWp) needs ~{required_roof_sqft} Sq. Ft. Your roof is {roof_sqft} Sq. Ft (Max capacity: ~{max_possible_kwp:.2f} kWp).")
     else:
-        st.warning(f"⚠️ **ছাদের জায়গার সতর্কতা:** আপনার প্রয়োজনীয় সিস্টেমের ({solar_kwp:.2f} kWp) জন্য অন্তত ~{required_roof_sqft} বর্গফুট ছাদ প্রয়োজন। আপনার দেওয়া ছাদের ক্ষেত্রফল {roof_sqft} বর্গফুট (সর্বোচ্চ ক্ষমতা: ~{max_possible_kwp:.2f} kWp)।")
+        st.warning(f"⚠️ **ছাদের জায়গার সতর্কতা:** আপনার প্রয়োজনীয় সিস্টেমের ({solar_kwp:.2f} kWp) জন্য অন্তত ~{required_roof_sqft} বর্গফুট ছাদ প্রয়োজন। আপনার দেওয়া ছাদের ক্ষেত্রফল {roof_sqft} বর্গফুট (সর্বোচ্চ ক্ষমতা: ~{max_possible_kwp:.2f} kWp)।")
 
 c1, c2 = st.columns(2)
 with c1:
     st.subheader("📋 System Specifications & Brands" if lang == "English" else "📋 যন্ত্রপাতির বিবরণ ও ব্র্যান্ড")
     st.info(f"⚡ **Inverter / ইনভার্টার:** {max(3, round(inverter_kva))} KVA/KW ({inverter_brand})")
     st.info(f"☀️ **Solar Panels / প্যানেল:** {solar_kwp:.2f} kWp ({panels_count}x 550W - {panel_brand})")
-    st.info(f"🏠 **Roof Space Needed / ছাদের জায়গা:** ~{required_roof_sqft} Sq. Ft (Available: {roof_sqft} Sq. Ft)")
+    st.info(f"🏠 **Roof Space Needed / ছাদের জায়গা:** ~{required_roof_sqft} Sq. Ft (Available: {roof_sqft} Sq. Ft)")
     if "With Battery" in system_type:
         st.info(f"🔋 **Battery / ব্যাটারি:** {battery_ah:.0f} Ah 48V ({battery_type})")
     else:
-        st.warning("🔋 **Battery:** Not required for On-Grid system." if lang == "English" else "🔋 **ব্যাটারি:** অন-গ্রিড সিস্টেমের জন্য ব্যাটারির প্রয়োজন নেই।")
+        st.warning("🔋 **Battery:** Not required for On-Grid system." if lang == "English" else "🔋 **ব্যাটারি:** অন-গ্রিড সিস্টেমের জন্য ব্যাটারির প্রয়োজন নেই।")
 
 with c2:
-    st.subheader("💰 Cost Breakdown & Financial ROI" if lang == "English" else "💰 আনুমানিক ব্যয় ও সাশ্রয় (ROI)")
+    st.subheader("💰 Cost Breakdown & Financial ROI" if lang == "English" else "💰 আনুমানিক ব্যয় ও সাশ্রয় (ROI)")
     st.write(f"• **Solar Panels ({panel_brand}):** BDT {panel_cost:,.0f}" if lang == "English" else f"• **সোলার প্যানেল ({panel_brand}):** BDT {panel_cost:,.0f}")
     st.write(f"• **Inverter ({inverter_brand}):** BDT {inverter_cost:,.0f}" if lang == "English" else f"• **ইনভার্টার ({inverter_brand}):** BDT {inverter_cost:,.0f}")
     if "With Battery" in system_type:
         st.write(f"• **Battery Bank:** BDT {battery_cost:,.0f}" if lang == "English" else f"• **ব্যাটারি ব্যাকআপ:** BDT {battery_cost:,.0f}")
-    st.write(f"• **Installation & Wiring (10%):** BDT {installation_cost:,.0f}" if lang == "English" else f"• **ইনস্টলেশন ও ওয়্যারিং (১০%):** BDT {installation_cost:,.0f}")
+    st.write(f"• **Installation & Wiring (10%):** BDT {installation_cost:,.0f}" if lang == "English" else f"• **ইনস্টলেশন ও ওয়্যারিং (১০%):** BDT {installation_cost:,.0f}")
     st.write("---")
-    st.write(f"💵 **Est. Monthly Savings:** BDT {monthly_savings:,.0f} / month" if lang == "English" else f"💵 **মাসিক আনুমানিক বিল সাশ্রয়:** BDT {monthly_savings:,.0f} / মাস")
-    st.write(f"📈 **Estimated Payback Period (ROI):** ~**{payback_years:.1f} Years**" if lang == "English" else f"📈 **মূল্য ফেরত আসার আনুমানিক সময় (ROI):** ~**{payback_years:.1f} বছর**")
+    st.write(f"💵 **Est. Monthly Savings:** BDT {monthly_savings:,.0f} / month" if lang == "English" else f"💵 **মাসিক আনুমানিক বিল সাশ্রয়:** BDT {monthly_savings:,.0f} / মাস")
+    st.write(f"📈 **Estimated Payback Period (ROI):** ~**{payback_years:.1f} Years**" if lang == "English" else f"📈 **মূল্য ফেরত আসার আনুমানিক সময় (ROI):** ~**{payback_years:.1f} বছর**")
 
 st.markdown("---")
 
@@ -376,7 +377,7 @@ if panels_count > 0 and roof_sqft > 0:
         ax.set_ylim(-4, roof_l + 4)
         ax.set_aspect('equal')
         ax.axis('off')
-        title_text = f"2D Blueprint: {placed} Panels Placed ({panels_count} Required)" if lang == "English" else f"২ডি ব্লুপ্রিন্ট: {placed}টি প্যানেল ছাদে বসানো হয়েছে (প্রয়োজন {panels_count}টি)"
+        title_text = f"2D Blueprint: {placed} Panels Placed ({panels_count} Required)" if lang == "English" else f"২ডি ব্লুপ্রিন্ট: {placed}টি প্যানেল ছাদে বসানো হয়েছে (প্রয়োজন {panels_count}টি)"
         plt.title(title_text, fontsize=10, fontweight='bold', color='#F8FAFC', pad=10)
         st.pyplot(fig, use_container_width=True)
 
@@ -425,7 +426,7 @@ if panels_count > 0 and roof_sqft > 0:
 
     # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
     elif "Level 3" in cad_mode:
-        st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof** to place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ল্যাটিটিউড-লংটিটিউড দিন অথবা ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি সোলার প্যানেল ছাদের ওপর বসে যাবে!")
+        st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof** to place the solar panels!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ল্যাটিটিউড-লংটিটিউড দিন অথবা ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি সোলার প্যানেল ছাদের ওপর বসে যাবে!")
         
         c1, c2 = st.columns(2)
         base_lat = c1.number_input("Latitude", value=22.376735, format="%.6f", key="sat_lat")
@@ -517,9 +518,134 @@ st.plotly_chart(fig, use_container_width=True)
 st.markdown("---")
 
 # ==========================================
+# NEW: 7.5 Advanced Engineering Studio (BNBC & NFPA Standards)
+# ==========================================
+st.subheader("⚙️ Advanced Solar Engineering Studio" if lang == "English" else "⚙️ অ্যাডভান্সড সোলার ইঞ্জিনিয়ারিং স্টুডিও")
+st.caption("Standardized according to BNBC-2020 & NFPA-70 (NEC) compliance standards" if lang == "English" else "BNBC-২০২০ এবং NFPA-৭০ (NEC) এর মানদণ্ড অনুযায়ী প্রস্তুতকৃত")
+
+eng_tabs = st.tabs([
+    "🔌 Single Line Diagram (SLD)" if lang == "English" else "🔌 সিঙ্গেল লাইন ডায়াগ্রাম (SLD)",
+    "⚡ Cable Sizing & Voltage Drop" if lang == "English" else "⚡ কেবল সাইজিং ও ভোল্টেজ ড্রপ",
+    "🛡️ Circuit Breaker & Safety" if lang == "English" else "🛡️ সার্কিট ব্রেকার ও সেফটি",
+    "📋 Bill of Quantities (BOQ)" if lang == "English" else "📋 সামগ্রীর তালিকা ও বাজেট (BOQ)"
+])
+
+# --- TAB 1: SLD ---
+with eng_tabs[0]:
+    st.write("#### Dynamic Electrical SLD Layout" if lang == "English" else "#### ডায়নামিক ইলেকট্রিক্যাল SLD লেআউট")
+    dot = graphviz.Digraph(comment='Solar System SLD')
+    dot.attr(rankdir='LR', size='8,5')
+    
+    dot.node('PV', f'PV Array\n({solar_kwp:.2f} kWp)', shape='box', style='filled', fillcolor='#FEF3C7')
+    dot.node('DCDB', 'DC Breaker & SPD\n(Protection)', shape='component', style='filled', fillcolor='#FDE68A')
+    dot.node('INV', f'Solar Inverter\n({max(3, round(inverter_kva))} KVA)', shape='box', style='filled', fillcolor='#93C5FD')
+    
+    if "With Battery" in system_type:
+        dot.node('BAT', f'Battery Bank\n({battery_ah:.0f} Ah 48V)', shape='cylinder', style='filled', fillcolor='#D1D5DB')
+        dot.edge('BAT', 'INV', label='DC Bus')
+
+    dot.node('ACDB', 'AC Breaker & SPD\n(Main Distribution)', shape='component', style='filled', fillcolor='#6EE7B7')
+    dot.node('LOAD', f'Connected Load\n({running_watts} W)', shape='house', style='filled', fillcolor='#A7F3D0')
+    
+    dot.edge('PV', 'DCDB', label='DC Cable')
+    dot.edge('DCDB', 'INV', label='DC Input')
+    dot.edge('INV', 'ACDB', label='AC Output')
+    dot.edge('ACDB', 'LOAD', label='AC Line')
+    
+    st.graphviz_chart(dot)
+    st.info("ℹ️ **BNBC Standard Notice:** All DC lines must include DC SPD (Surge Protection Device) and Isolator Switch before Inverter." if lang == "English" else "ℹ️ **BNBC মানদণ্ড সতর্কতা:** ইনভার্টারের পূর্বে প্রতিটি ডিসি লাইনে ডিসি এসপিডি (সুরক্ষা ডিভাইস) এবং আইসোলেটর সুইচ থাকা বাধ্যতামূলক।")
+
+# --- TAB 2: Cable Sizing & Voltage Drop ---
+with eng_tabs[1]:
+    st.write("#### Electrical Cable Selection & Voltage Drop Analysis" if lang == "English" else "#### ক্যাবল নির্বাচন ও ভোল্টেজ ড্রপ বিশ্লেষণ")
+    col_c1, col_c2 = st.columns(2)
+    
+    system_voltage = 48 if "With Battery" in system_type else 230
+    dc_current = (solar_kwp * 1000) / system_voltage if system_voltage > 0 else 0
+    
+    with col_c1:
+        cable_dist = st.number_input("Cable Distance (Panel to Inverter - Meters):" if lang == "English" else "ক্যাবলের দৈর্ঘ্য (প্যানেল থেকে ইনভার্টার - মিটার):", min_value=5, max_value=150, value=15)
+        st.metric(label="Calculated System Current" if lang == "English" else "হিসেবকৃত কারেন্ট", value=f"{dc_current:.2f} A")
+        
+    with col_c2:
+        if dc_current <= 15:
+            rec_cable = "4.0 mm² Copper"
+            v_drop_val = (2 * cable_dist * dc_current * 0.0178) / (4.0 * system_voltage)
+        elif dc_current <= 30:
+            rec_cable = "6.0 mm² Copper"
+            v_drop_val = (2 * cable_dist * dc_current * 0.0178) / (6.0 * system_voltage)
+        else:
+            rec_cable = "10.0 mm² Copper"
+            v_drop_val = (2 * cable_dist * dc_current * 0.0178) / (10.0 * system_voltage)
+            
+        st.metric(label="Recommended Cable Size" if lang == "English" else "সুপারিশকৃত ক্যাবল সাইজ", value=rec_cable)
+        st.metric(label="Estimated Voltage Drop (%)" if lang == "English" else "আনুমানিক ভোল্টেজ ড্রপ (%)", value=f"{v_drop_val:.2f}%", 
+                  delta="Acceptable (<3%)" if v_drop_val < 3 else "High Loss (>3%)",
+                  delta_color="normal" if v_drop_val < 3 else "inverse")
+
+# --- TAB 3: Breaker & Safety ---
+with eng_tabs[2]:
+    st.write("#### Circuit Breaker & Lightning Protection (LPS)" if lang == "English" else "#### সার্কিট ব্রেকার ও বজ্রপাত সুরক্ষার বিবরণ (BNBC/NFPA-70)")
+    ac_amp = (solar_kwp * 1000) / 230
+    mcb_rating_val = int(np.ceil(ac_amp * 1.25 / 6) * 6)
+    
+    cp1, cp2 = st.columns(2)
+    with cp1:
+        st.markdown("##### ⚡ Circuit Breakers & SPD Ratings" if lang == "English" else "##### ⚡ সার্কিট ব্রেকার ও সুরক্ষার বিবরণ")
+        st.write(f"• **AC Main MCB:** `{max(16, mcb_rating_val)} A (C-Curve Single/Double Pole)`")
+        st.write(f"• **DC Circuit Breaker:** `{max(16, int(dc_current * 1.25))} A (1000V DC Rated)`")
+        st.write(f"• **Surge Protection (SPD):** `Type-II DC & AC SPD Boxes`")
+        
+    with cp2:
+        st.markdown("##### 🌩️ Earthing & Lightning Protection System" if lang == "English" else "##### 🌩️ আর্থিং ও বজ্রপাত সুরক্ষা ব্যবস্থা")
+        st.write("• **Earthing Pits:** 2 Independent Pits (Equipment & Lightning)")
+        st.write("• **Earthing Wire:** 16 mm² Green Insulated Copper Cable")
+        st.write("• **LPS Rod:** Early Streamer Emission (ESE) Terminal Air Rod")
+
+# --- TAB 4: BOQ ---
+with eng_tabs[3]:
+    st.write("#### Bill of Quantities (BOQ) Summary" if lang == "English" else "#### প্রজেক্ট মালামাল ও খরচের বিবরণী (BOQ)")
+    
+    boq_items = {
+        "Item Description / বিবরণ": [
+            f"Solar PV Modules (550W Tier-1)",
+            f"Solar Inverter ({max(3, round(inverter_kva))} KVA)",
+            "Solar Cable & Armored Wiring",
+            "Aluminum Rooftop Mounting Structure",
+            "DC/AC Distribution Box + SPD + Breakers",
+            "Earthing Rods & Cable Trays",
+            "Engineering & Installation Charge"
+        ],
+        "Qty / পরিমাণ": [
+            f"{panels_count} Pcs",
+            "1 Unit",
+            f"{cable_dist * 2} Meters",
+            "1 Set",
+            "1 Set",
+            "2 Sets",
+            "1 Job"
+        ],
+        "Est. Price (BDT)": [
+            panel_cost,
+            inverter_cost,
+            cable_dist * 2 * 180,
+            panels_count * 2500,
+            18000,
+            14000,
+            installation_cost
+        ]
+    }
+    
+    df_boq_table = pd.DataFrame(boq_items)
+    st.dataframe(df_boq_table, use_container_width=True)
+    st.markdown(f"#### **Total Engineering Cost: BDT {df_boq_table['Est. Price (BDT)'].sum():,.0f}**")
+
+st.markdown("---")
+
+# ==========================================
 # 8. Live Weather Solar Tracker (City & Map)
 # ==========================================
-st.subheader("🌦️ Live Weather-Based Solar Tracker" if lang == "English" else "🌦️ লাইভ আবহাওয়া ট্র্যাকার")
+st.subheader("🌦️ Live Weather-Based Solar Tracker" if lang == "English" else "🌦️ লাইভ আবহাওয়া ট্র্যাকার")
 
 track_options = ["Bangladesh City List", "Select Location on Map"] if lang == "English" else ["বাংলাদেশের শহর তালিকা", "ম্যাপ থেকে লোকেশন নিন"]
 track_type = st.radio("Select Location Mode:" if lang == "English" else "লোকেশন মোড নির্বাচন করুন:", track_options, horizontal=True)
@@ -543,7 +669,7 @@ if track_type in ["Bangladesh City List", "বাংলাদেশের শহ
             w1, w2, w3 = st.columns(3)
             w1.metric("Temperature" if lang == "English" else "তাপমাত্রা", f"{temp} °C")
             w2.metric("Cloudiness" if lang == "English" else "মেঘের পরিমাণ", f"{cloudiness}%")
-            w3.metric("Condition" if lang == "English" else "আবহাওয়া অবস্থা", weather_desc)
+            w3.metric("Condition" if lang == "English" else "আবহাওয়া অবস্থা", weather_desc)
             st.success(f"⚡ **Estimated Live Output for {selected_city}:** {current_kw:.2f} kW (Efficiency: {efficiency*100:.1f}%)" if lang == "English" else f"⚡ **{selected_city}-এর জন্য আনুমানিক উৎপাদন:** {current_kw:.2f} kW (কার্যক্ষমতা: {efficiency*100:.1f}%)")
         else:
             st.error("Error fetching weather data!")
@@ -577,7 +703,7 @@ else:
                 w1, w2, w3 = st.columns(3)
                 w1.metric("Temperature" if lang == "English" else "তাপমাত্রা", f"{temp} °C")
                 w2.metric("Cloudiness" if lang == "English" else "মেঘের পরিমাণ", f"{cloudiness}%")
-                w3.metric("Condition" if lang == "English" else "আবহাওয়া অবস্থা", weather_desc)
+                w3.metric("Condition" if lang == "English" else "আবহাওয়া অবস্থা", weather_desc)
                 st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (Efficiency: {efficiency*100:.1f}%)" if lang == "English" else f"⚡ **আনুমানিক উৎপাদন:** {current_kw:.2f} kW (কার্যক্ষমতা: {efficiency*100:.1f}%)")
             else:
                 st.error("Error fetching weather data for coordinates!")
