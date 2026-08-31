@@ -136,18 +136,17 @@ st.markdown("---")
 # Categorized Default Appliances (Regular vs Heavy)
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
-        # Regular Loads (Use global average running hours)
+        # Regular Loads
         "Ceiling Fan (75W)": {"watt": 75, "qty": 5, "type": "regular", "hours": 8.0},
         "LED Light (15W)": {"watt": 15, "qty": 10, "type": "regular", "hours": 8.0},
         "Refrigerator (200W)": {"watt": 200, "qty": 1, "type": "regular", "hours": 8.0},
         "Smart TV (80W)": {"watt": 80, "qty": 1, "type": "regular", "hours": 8.0},
         
-        # Heavy Loads (Use custom individual daily running hours)
+        # Heavy Loads
         "Oven (1200W)": {"watt": 1200, "qty": 1, "type": "heavy", "hours": 1.0},
         "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1, "type": "heavy", "hours": 1.5}
     }
 
-# Extra appliances list for dropdown mapped with load type
 EXTRA_APPLIANCES = {
     "1.5 Ton Inverter AC (1500W)": {"watt": 1500, "type": "heavy", "default_hours": 6.0},
     "1 Ton Non-Inverter AC (1200W)": {"watt": 1200, "type": "heavy", "default_hours": 6.0},
@@ -163,7 +162,6 @@ EXTRA_APPLIANCES = {
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-# Option to add extra appliance
 st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
 selected_extra = st.sidebar.selectbox(
     "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
@@ -187,7 +185,7 @@ if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তাল�
 
 st.sidebar.markdown("---")
 
-# --- REGULAR LOADS SECTION ---
+# --- REGULAR LOADS ---
 st.sidebar.subheader("💡 Regular Loads (Standard)" if lang == "English" else "💡 সাধারণ লোড (নিয়মিত ব্যবহার)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     if app_data.get("type", "regular") == "regular":
@@ -209,7 +207,7 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
                 del st.session_state.appliance_list[app_name]
                 st.rerun()
 
-# --- HEAVY LOADS SECTION ---
+# --- HEAVY LOADS ---
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚡ Heavy / High Power Loads" if lang == "English" else "⚡ হেভি ও হাই-ওয়াট লোড (আলাদা সময়)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
@@ -226,7 +224,6 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
             )
             st.session_state.appliance_list[app_name]["qty"] = new_qty
             
-            # Custom Usage Hours for Heavy Load
             custom_hours = st.number_input(
                 f"⏱️ {app_name} (Hours/Day)",
                 min_value=0.1,
@@ -288,14 +285,12 @@ for app_name, app_data in st.session_state.appliance_list.items():
     total_app_watt = watt * qty
     running_watts += total_app_watt
     
-    # Calculate daily Wh individually based on type
     if app_type == "heavy":
         used_hrs = app_data.get("hours", 1.0)
         daily_wh += total_app_watt * used_hrs
     else:
         daily_wh += total_app_watt * avg_running_hours
     
-    # Peak Surge Watt calculations
     if "Refrigerator" in app_name:
         surge_watts += total_app_watt * 2.5
     elif "Pump" in app_name:
@@ -569,7 +564,7 @@ st.caption("Standardized according to BNBC-2020 & NFPA-70 (NEC) compliance stand
 
 eng_tabs = st.tabs([
     "🔌 Single Line Diagram (SLD)" if lang == "English" else "🔌 সিঙ্গেল লাইন ডায়াগ্রাম (SLD)",
-    "⚡ Cable Sizing & Voltage Drop" if lang == "English" else "⚡ কেবল সাইজিং ও ভোল্টেজ ড্রপ",
+    "⚡ Cable Sizing & Voltage Drop" if lang == "English" else "⚡ ক্যাবল সাইজিং ও ভোল্টেজ ড্রপ",
     "🛡️ Circuit Breaker & Safety" if lang == "English" else "🛡️ সার্কিট ব্রেকার ও সেফটি",
     "📋 Bill of Quantities (BOQ)" if lang == "English" else "📋 সামগ্রীর তালিকা ও বাজেট (BOQ)"
 ])
@@ -759,7 +754,7 @@ else:
 st.markdown("---")
 
 # ==========================================
-# 10. Professional Project Report Generation & Export
+# 10. Professional Project Report Generation & Export (WITH SLD DIAGRAM)
 # ==========================================
 st.subheader("📄 Automated Project Proposal & Report Generator" if lang == "English" else "📄 স্বয়ংক্রিয় প্রজেক্ট প্রপোজাল ও রিপোর্ট জেনারেটর")
 st.caption("Generate an official PDF/Print-ready engineering proposal" if lang == "English" else "অফিসিয়াল পিডিএফ/প্রিন্ট উপযোগী ইঞ্জিনিয়ারিং প্রপোজাল তৈরি করুন")
@@ -767,6 +762,74 @@ st.caption("Generate an official PDF/Print-ready engineering proposal" if lang =
 client_name = st.text_input("Client / Project Name:" if lang == "English" else "গ্রাহক/প্রজেক্টের নাম:", value="Solario Demo Project")
 
 if st.button("📥 Generate & View Official Proposal Report" if lang == "English" else "📥 প্রপোজাল রিপোর্ট তৈরি করে দেখুন", use_container_width=True):
+    
+    # Conditional SVG Battery block for SLD
+    battery_svg_block = ""
+    if "With Battery" in system_type:
+        battery_svg_block = f"""
+        <line x1="430" y1="90" x2="430" y2="45" stroke="#F59E0B" stroke-width="2.5"/>
+        <line x1="430" y1="45" x2="470" y2="45" stroke="#F59E0B" stroke-width="2.5" marker-end="url(#arrow)"/>
+        <g transform="translate(470, 20)">
+            <rect x="0" y="0" width="130" height="50" rx="6" fill="#F1F5F9" stroke="#64748B" stroke-width="2"/>
+            <text x="65" y="22" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0F172A" text-anchor="middle">Battery Bank</text>
+            <text x="65" y="38" font-family="sans-serif" font-size="10" fill="#475569" text-anchor="middle">({battery_ah:.0f} Ah 48V)</text>
+        </g>
+        """
+
+    # Pure HTML/SVG SLD diagram to embed smoothly into print report
+    sld_svg = f"""
+    <div style="text-align: center; margin: 20px 0; background: #FFFFFF; padding: 15px; border: 1px solid #CBD5E1; border-radius: 8px;">
+        <svg width="100%" height="110" viewBox="0 0 820 110" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#0284C7"/>
+                </marker>
+            </defs>
+            
+            <!-- PV Array -->
+            <rect x="10" y="20" width="130" height="50" rx="6" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+            <text x="75" y="42" font-family="sans-serif" font-size="11" font-weight="bold" fill="#78350F" text-anchor="middle">PV Array</text>
+            <text x="75" y="58" font-family="sans-serif" font-size="10" fill="#B45309" text-anchor="middle">({solar_kwp:.2f} kWp)</text>
+            
+            <!-- Arrow 1 -->
+            <line x1="140" y1="45" x2="175" y2="45" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="157" y="38" font-family="sans-serif" font-size="8" fill="#64748B" text-anchor="middle">DC</text>
+            
+            <!-- DC DB -->
+            <rect x="180" y="20" width="120" height="50" rx="6" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>
+            <text x="240" y="42" font-family="sans-serif" font-size="11" font-weight="bold" fill="#78350F" text-anchor="middle">DCDB + SPD</text>
+            <text x="240" y="58" font-family="sans-serif" font-size="10" fill="#92400E" text-anchor="middle">Protection</text>
+            
+            <!-- Arrow 2 -->
+            <line x1="300" y1="45" x2="335" y2="45" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow)"/>
+            
+            <!-- Inverter -->
+            <rect x="340" y="20" width="130" height="50" rx="6" fill="#93C5FD" stroke="#2563EB" stroke-width="2"/>
+            <text x="405" y="42" font-family="sans-serif" font-size="11" font-weight="bold" fill="#1E3A8A" text-anchor="middle">Solar Inverter</text>
+            <text x="405" y="58" font-family="sans-serif" font-size="10" fill="#1E40AF" text-anchor="middle">({max(3, round(inverter_kva))} KVA)</text>
+            
+            {battery_svg_block}
+
+            <!-- Arrow 3 -->
+            <line x1="470" y1="45" x2="505" y2="45" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow)"/>
+            <text x="487" y="38" font-family="sans-serif" font-size="8" fill="#64748B" text-anchor="middle">AC</text>
+
+            <!-- AC DB -->
+            <rect x="510" y="20" width="120" height="50" rx="6" fill="#6EE7B7" stroke="#059669" stroke-width="2"/>
+            <text x="570" y="42" font-family="sans-serif" font-size="11" font-weight="bold" fill="#064E3B" text-anchor="middle">ACDB + SPD</text>
+            <text x="570" y="58" font-family="sans-serif" font-size="10" fill="#047857" text-anchor="middle">Main Panel</text>
+            
+            <!-- Arrow 4 -->
+            <line x1="630" y1="45" x2="665" y2="45" stroke="#0284C7" stroke-width="2.5" marker-end="url(#arrow)"/>
+            
+            <!-- Connected Load -->
+            <rect x="670" y="20" width="130" height="50" rx="6" fill="#A7F3D0" stroke="#10B981" stroke-width="2"/>
+            <text x="735" y="42" font-family="sans-serif" font-size="11" font-weight="bold" fill="#064E3B" text-anchor="middle">Building Load</text>
+            <text x="735" y="58" font-family="sans-serif" font-size="10" fill="#047857" text-anchor="middle">({running_watts} W)</text>
+        </svg>
+    </div>
+    """
+
     report_html = f"""
     <!DOCTYPE html>
     <html>
@@ -811,7 +874,10 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
             </div>
         </div>
 
-        <div class="section-title">2. Financial ROI & Savings Estimation</div>
+        <div class="section-title">2. Single Line Diagram (SLD)</div>
+        {sld_svg}
+
+        <div class="section-title">3. Financial ROI & Savings Estimation</div>
         <table>
             <tr><th>Metric</th><th>Details / Amount</th></tr>
             <tr><td>Total System Budget</td><td><strong>BDT {total_cost:,.0f}</strong></td></tr>
@@ -820,7 +886,7 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
             <tr><td>Payback Period (ROI)</td><td><strong>~{payback_years:.1f} Years</strong></td></tr>
         </table>
 
-        <div class="section-title">3. Bill of Quantities (BOQ)</div>
+        <div class="section-title">4. Bill of Quantities (BOQ)</div>
         <table>
             <tr>
                 <th>Item Description</th>
@@ -840,7 +906,7 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
             </tr>
         </table>
 
-        <div class="section-title">4. Engineering Standards & Compliance</div>
+        <div class="section-title">5. Engineering Standards & Compliance</div>
         <p style="font-size: 12px; color: #475569;">
             • Compliant with BNBC-2020 & NFPA-70 (NEC) guidelines.<br>
             • Dual earthing protection system for equipment and lightning arrestor.<br>
@@ -855,7 +921,7 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
     """
 
     st.markdown("### 📜 Official Proposal Preview")
-    st.components.v1.html(report_html, height=600, scrolling=True)
+    st.components.v1.html(report_html, height=650, scrolling=True)
 
     st.download_button(
         label="📥 Download HTML Report (Print to PDF)" if lang == "English" else "📥 রিপোর্ট ডাউনলোড করুন (পিডিএফ প্রিন্ট করুন)",
