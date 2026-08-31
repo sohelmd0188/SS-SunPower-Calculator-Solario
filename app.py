@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import pydeck as pdk
+import folium
+from streamlit_folium import st_folium
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -64,7 +67,7 @@ if lang == "English":
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
         <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine </div>
-        <div class="hero-subtitle">Advanced calculations with 2D/3D Interactive Map CAD Layout, Weather API, Engineering Studio, Cash Flow, and BOQ Projections.</div>
+        <div class="hero-subtitle">Advanced calculations with Multi-Level CAD Blueprint, Pydeck 3D Model, Satellite Roof Mapping, and BOQ Projections.</div>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -72,7 +75,7 @@ else:
     <div class="hero-container">
         <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
         <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
-        <div class="hero-subtitle">লাইভ ম্যাপ ইন্টিগ্রেশন, ২ডি/থ্রিডি ক্যাড লেআউট, আবহাওয়া সিমুলেশন, ইঞ্জিনিয়ারিং স্টুডিও, ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
+        <div class="hero-subtitle">মাল্টি-লেভেল ক্যাড ব্লুপ্রিন্ট, থ্রিডি পাইডেক ماডেল, স্যাটেলাইট ম্যাপ প্লেসমেন্ট এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -87,7 +90,7 @@ if "appliance_list" not in st.session_state:
         "LED Light (15W)": {"watt": 15, "qty": 10, "type": "regular", "hours": 8.0},
         "Refrigerator (200W)": {"watt": 200, "qty": 1, "type": "regular", "hours": 8.0},
         "Smart TV (80W)": {"watt": 80, "qty": 1, "type": "regular", "hours": 8.0},
-        "Oven (1200W)": {"watt": 1200, "qty": 1, "type": "heavy", "hours": 1.0},
+        "Electric Oven / Baking Oven (2000W)": {"watt": 2000, "qty": 1, "type": "heavy", "hours": 1.0},
         "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1, "type": "heavy", "hours": 1.5}
     }
 
@@ -279,164 +282,163 @@ col4.metric("Total Investment" if lang == "English" else "মোট বাজে
 st.markdown("---")
 
 # ==========================================
-# 6. Advanced Modules: 24-Hour Simulation & Interactive 2D/3D Map CAD Layout
+# 6. CAD & Solar Layout Options
 # ==========================================
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📊 24-Hr Generation / উৎপাদন সিমুলেশন", 
-    "🗺️ Interactive Live Map & 2D/3D CAD Layout / লাইভ ম্যাপ ও ক্যাড লেআউট", 
-    "⚡ Engineering Studio / ইঞ্জিনিয়ারিং স্টুডিও", 
-    "📈 Cash Flow & Proposal / ক্যাশ ফ্লো ও প্রপোজাল"
-])
+st.subheader("📐 Auto Solar CAD & Custom Location Design" if lang == "English" else "📐 সোলার ক্যাড ও নিজস্ব লোকেশন ডিজাইন")
 
-with tab1:
-    st.subheader("24-Hour Solar PV Power Generation Curve" if lang == "English" else "২৪ ঘণ্টার সোলার পাওয়ার প্রোডাকশন কার্ভ")
-    hours_day = list(range(24))
-    generation_curve = [max(0, solar_kwp * 1000 * math.exp(-((h - 13) ** 2) / 10)) for h in hours_day]
-    
-    df_gen = pd.DataFrame({"Hour": hours_day, "Power (W)": generation_curve})
-    fig_gen = px.area(df_gen, x="Hour", y="Power (W)", title="Estimated Daily Power Profile (Watts)" if lang == "English" else "দিনব্যাপী সৌর বিদ্যুৎ উৎপাদনের প্রোফাইল", color_discrete_sequence=['#F59E0B'])
-    fig_gen.update_layout(template="plotly_dark")
-    st.plotly_chart(fig_gen, use_container_width=True)
+cad_mode = st.radio(
+    "Choose Design View Level:" if lang == "English" else "ডিজাইন ভিউ বেছে নিন:",
+    ["Level 1: 2D Blueprint (Matplotlib)", "Level 2: 3D Interactive Model (Pydeck)", "Level 3: Custom Satellite Roof Placement"],
+    horizontal=True
+)
 
-with tab2:
-    st.subheader("Interactive Live Map Location & 2D/3D Rooftop CAD Layout" if lang == "English" else "লাইভ ম্যাপ লোকেশন ও ২ডি/থ্রিডি ছাদের ক্যাড লেআউট")
-    
-    # Live Map & Location Setting
-    col_map_opt1, col_map_opt2 = st.columns(2)
-    with col_map_opt1:
-        map_city = st.selectbox("Select Project City / Location:" if lang == "English" else "প্রজেক্টের শহর বা লোকেশন:", 
-                                ["Chattogram (Default)", "Dhaka", "Sylhet", "Rajshahi", "Khulna", "Barishal", "Rangpur"])
-    with col_map_opt2:
-        view_mode = st.radio("Select View Mode:" if lang == "English" else "ভিউ মোড নির্বাচন করুন:", ["2D Top-Down View", "3D Isometric View", "Live Satellite Map Grid"], horizontal=True)
+if panels_count > 0 and roof_sqft > 0:
+    roof_w = np.sqrt(roof_sqft * 1.5)
+    roof_l = roof_sqft / roof_w
+    p_w, p_l = 3.5, 6.5
+    cols = max(1, int(roof_w // (p_w + 0.5)))
+    rows = int(np.ceil(panels_count / cols))
 
-    # City Coordinates mapping for Live Map
-    city_coords = {
-        "Chattogram (Default)": {"lat": 22.3569, "lon": 91.7832},
-        "Dhaka": {"lat": 23.8103, "lon": 90.4125},
-        "Sylhet": {"lat": 24.8949, "lon": 91.8687},
-        "Rajshahi": {"lat": 24.3745, "lon": 88.6042},
-        "Khulna": {"lat": 22.8456, "lon": 89.5403},
-        "Barishal": {"lat": 22.7010, "lon": 90.3535},
-        "Rangpur": {"lat": 25.7439, "lon": 89.2752}
-    }
-    lat = city_coords[map_city]["lat"]
-    lon = city_coords[map_city]["lon"]
-
-    if view_mode == "Live Satellite Map Grid":
-        st.info(f"📍 Showing live map region for **{map_city}** (Lat: {lat}, Lon: {lon}) with simulated rooftop boundaries.")
-        df_map = pd.DataFrame({'lat': [lat], 'lon': [lon], 'name': [f"{map_city} Project Rooftop"]})
-        st.map(df_map, zoom=14)
-    else:
-        col_a, col_b = st.columns([1, 1.2])
-        with col_a:
-            st.info(f"📍 **Required Roof Area:** {required_roof_sqft} Sq. Ft")
-            st.info(f"📍 **Available Roof Area:** {roof_sqft} Sq. Ft")
-            st.info(f"📐 **Tilt Alignment Angle:** {tilt_angle}° facing South")
-            if roof_sqft < required_roof_sqft:
-                st.error("⚠️ Warning: Available roof area is less than required!" if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
-            else:
-                st.success("✅ Roof area is sufficient for this installation capacity." if lang == "English" else "✅ এই সিস্টেমের জন্য ছাদের জায়গা যথেষ্ট রয়েছে।")
+    # --- LEVEL 1: 2D Blueprint ---
+    if "Level 1" in cad_mode:
+        fig, ax = plt.subplots(figsize=(8, 4.5), facecolor='#0F172A')
+        ax.set_facecolor('#0F172A')
         
-        with col_b:
-            if panels_count > 0:
-                cols_grid = max(1, math.ceil(math.sqrt(panels_count)))
-                x_coords = [i % cols_grid for i in range(panels_count)]
-                y_coords = [i // cols_grid for i in range(panels_count)]
-                
-                if view_mode == "3D Isometric View":
-                    z_coords = [math.sin(math.radians(tilt_angle)) * (i // cols_grid) for i in range(panels_count)]
-                    df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords, "Z": z_coords})
-                    fig_cad = px.scatter_3d(df_cad, x="X", y="Y", z="Z", title=f"3D Isometric Rooftop Panel Grid ({panels_count} Modules)" if lang == "English" else f"থ্রিডি ছাদের সোলার প্যানেল বিন্যাস ({panels_count} পিস)")
-                    fig_cad.update_traces(marker=dict(size=8, color='#F59E0B'))
-                else:
-                    df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords})
-                    fig_cad = px.scatter(df_cad, x="X", y="Y", title=f"2D Top-Down Rooftop Grid ({panels_count} Modules)" if lang == "English" else f"টুডি ছাদের সোলার প্যানেল গ্রিড ({panels_count} পিস)", symbol_sequence=['square'])
-                    fig_cad.update_traces(marker=dict(size=16, color='#F59E0B'))
-                
-                fig_cad.update_layout(template="plotly_dark", margin=dict(l=10, r=10, t=40, b=10))
-                st.plotly_chart(fig_cad, use_container_width=True)
+        roof_rect = patches.Rectangle((0, 0), roof_w, roof_l, linewidth=2, edgecolor='#F59E0B', facecolor='#1E293B', linestyle='--')
+        ax.add_patch(roof_rect)
+        
+        ax.text(roof_w/2, -1.8, f"Roof Width: {roof_w:.1f} ft", ha='center', fontsize=9, color='#F8FAFC')
+        ax.text(-1.8, roof_l/2, f"Roof Length: {roof_l:.1f} ft", va='center', rotation='vertical', fontsize=9, color='#F8FAFC')
 
-with tab3:
-    st.subheader("Advanced Engineering & Protection Studio (BNBC & NFPA)" if lang == "English" else "অ্যাডভান্সড ইঞ্জিনিয়ারিং ও প্রটেকশন স্টুডিও (BNBC ও NFPA মানদণ্ড)")
-    col_eng1, col_eng2 = st.columns(2)
-    with col_eng1:
-        st.markdown("### 🔌 Cable Sizing & Voltage Drop")
-        st.write(f"- **DC Cable Recommendation:** 4mm² / 6mm² XLPE Copper Wire (Max 1% Drop)")
-        st.write(f"- **AC Cable Recommendation:** 10mm² Copper Cable for Main Inverter Feed")
-        st.write(f"- **Estimated Inverter Capacity:** {inverter_kva:.2f} kVA ({inverter_brand})")
-    with col_eng2:
-        st.markdown("### ⚡ Protection & Earthing (NFPA 780)")
-        st.write(f"- **DC Protection:** PV DC Isolator & Surge Protection Device (SPD Type-2)")
-        st.write(f"- **AC Protection:** MCB & Residual Current Circuit Breaker (RCCB)")
-        st.write(f"- **Earthing System:** Dedicated Copper Earth Rod (Resistance < 5 Ohms)")
+        placed = 0
+        start_x, start_y = 1.0, 1.0
 
-with tab4:
-    st.subheader("📈 10-Year Net Metering Cash Flow & Proposal" if lang == "English" else "📈 ১০ বছরের নেট মিটারিং ক্যাশ ফ্লো ও প্রপোজাল")
-    
-    years = list(range(1, 11))
-    cumulative_cash_flow = []
-    running_cf = -total_cost
-    tariff_escalation = 1.05  
+        for r in range(rows):
+            for c in range(cols):
+                if placed < panels_count:
+                    x = start_x + c * (p_w + 0.5)
+                    y = start_y + r * (p_l + 0.5)
+                    if (x + p_w <= roof_w) and (y + p_l <= roof_l):
+                        panel_patch = patches.Rectangle((x, y), p_w, p_l, linewidth=1, edgecolor='#38BDF8', facecolor='#0284C7', alpha=0.85)
+                        ax.add_patch(panel_patch)
+                        ax.plot([x, x+p_w], [y+p_l/2, y+p_l/2], color='#E0F2FE', linewidth=0.5)
+                        ax.plot([x+p_w/2, x+p_w/2], [y, y+p_l], color='#E0F2FE', linewidth=0.5)
+                        placed += 1
 
-    for y in years:
-        yearly_benefit = yearly_savings * (tariff_escalation ** (y - 1))
-        running_cf += yearly_benefit
-        cumulative_cash_flow.append(running_cf)
+        ax.set_xlim(-4, roof_w + 4)
+        ax.set_ylim(-4, roof_l + 4)
+        ax.set_aspect('equal')
+        ax.axis('off')
+        plt.title(f"2D Blueprint: {placed} Panels Placed ({panels_count} Required)", fontsize=10, fontweight='bold', color='#F8FAFC', pad=10)
+        st.pyplot(fig, use_container_width=True)
 
-    df_cashflow = pd.DataFrame({
-        'Year': [f"Year {y}" for y in years],
-        'Net Cash Flow (BDT)': cumulative_cash_flow
-    })
+    # --- LEVEL 2: 3D Interactive Model ---
+    elif "Level 2" in cad_mode:
+        st.write("📍 **Enter your coordinates to generate 3D Building:**" if lang == "English" else "📍 **৩ডি বিল্ডিং তৈরির জন্য লোকেশন কোঅর্ডিনেট দিন:**")
+        c1, c2 = st.columns(2)
+        base_lat = c1.number_input("Latitude", value=22.3569, format="%.4f")
+        base_lon = c2.number_input("Longitude", value=91.7832, format="%.4f")
 
-    fig_cf = px.bar(df_cashflow, x='Year', y='Net Cash Flow (BDT)',
-                  title="10-Year Cumulative Savings & Net Metering Return" if lang == "English" else "১০ বছরের সঞ্চয় ও নেট মিটারিং রিটার্ন গ্রাফ",
-                  color='Net Cash Flow (BDT)', color_continuous_scale=['#EF4444', '#10B981'])
-    fig_cf.update_layout(template="plotly_dark")
-    st.plotly_chart(fig_cf, use_container_width=True)
+        building_data = [{
+            "coordinates": [
+                [base_lon - 0.0001, base_lat - 0.0001],
+                [base_lon + 0.0001, base_lat - 0.0001],
+                [base_lon + 0.0001, base_lat + 0.0001],
+                [base_lon - 0.0001, base_lat + 0.0001]
+            ],
+            "height": 15,
+            "fill_color": [30, 41, 59, 200]
+        }]
+        
+        panel_data = []
+        placed = 0
+        for r in range(rows):
+            for c in range(cols):
+                if placed < panels_count:
+                    offset_x = (c - cols/2) * 0.00002
+                    offset_y = (r - rows/2) * 0.00002
+                    panel_data.append({
+                        "coordinates": [
+                            [base_lon + offset_x, base_lat + offset_y],
+                            [base_lon + offset_x + 0.000015, base_lat + offset_y],
+                            [base_lon + offset_x + 0.000015, base_lat + offset_y + 0.000015],
+                            [base_lon + offset_x, base_lat + offset_y + 0.000015]
+                        ],
+                        "height": 15.8,
+                        "fill_color": [2, 132, 199, 255]
+                    })
+                    placed += 1
 
-    st.markdown("---")
-    client_name = st.text_input("Client / Project Name:" if lang == "English" else "গ্রাহক বা প্রজেক্টের নাম:", value="Commercial Solar Client")
+        roof_layer = pdk.Layer("PolygonLayer", building_data, get_polygon="coordinates", get_elevation="height", get_fill_color="fill_color", extruded=True)
+        panels_layer = pdk.Layer("PolygonLayer", panel_data, get_polygon="coordinates", get_elevation="height", get_fill_color="fill_color", extruded=True)
 
-    if st.button("📥 Generate Printable Proposal Window" if lang == "English" else "📥 প্রিন্টযোগ্য প্রপোজাল তৈরি করুন", use_container_width=True):
-        proposal_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Solar Proposal & BOQ</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; color: #1E293B; margin: 20px; }}
-                h2 {{ color: #D97706; border-bottom: 2px solid #F59E0B; padding-bottom: 5px; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
-                th, td {{ border: 1px solid #CBD5E1; padding: 8px 12px; text-align: left; }}
-                th {{ background-color: #F1F5F9; }}
-                .btn {{ background: #F59E0B; color: white; padding: 10px 20px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }}
-            </style>
-        </head>
-        <body>
-            <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-            <h2>Solario Commercial Solar Proposal</h2>
-            <p><strong>Client:</strong> {client_name} | <strong>System Type:</strong> {system_type}</p>
-            <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
-            
-            <h3>Bill of Quantities (BOQ)</h3>
-            <table>
-                <tr><th>Item Description</th><th>Qty</th><th>Estimated Price (BDT)</th></tr>
-                <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs (550W)</td><td>BDT {panel_cost:,.0f}</td></tr>
-                <tr><td>Inverter ({inverter_brand})</td><td>1 Unit ({inverter_kva:.1f} kVA)</td><td>BDT {inverter_cost:,.0f}</td></tr>
-                {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}</td></tr>" if "With Battery" in system_type else ""}
-                <tr><td>Rooftop Structure, Wiring & Protection</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
-                <tr style="font-weight:bold; background:#FEF3C7;"><td colspan="2">Total Investment</td><td>BDT {total_cost:,.0f}</td></tr>
-            </table>
-            
-            <h3>Financial Summary & ROI</h3>
-            <p>Estimated Monthly Savings: <strong>BDT {monthly_savings:,.0f}</strong></p>
-            <p>Estimated Yearly Savings: <strong>BDT {yearly_savings:,.0f}</strong></p>
-            <p>Payback Period (ROI): <strong>~{payback_years:.1f} Years</strong></p>
-        </body>
-        </html>
-        """
-        st.components.v1.html(proposal_html, height=600, scrolling=True)
+        view_state = pdk.ViewState(latitude=base_lat, longitude=base_lon, zoom=19, pitch=55, bearing=30)
+        st.pydeck_chart(pdk.Deck(layers=[roof_layer, panels_layer], initial_view_state=view_state))
+
+    # --- LEVEL 3: Real Satellite Interactive Solar Placement ---
+    elif "Level 3" in cad_mode:
+        st.info("🗺️ **How to use:** Enter coordinates or zoom into the Satellite Map and **CLICK on your roof**!" if lang == "English" else f"🗺️ **ব্যবহারের নিয়ম:** ম্যাপে ছাদের ওপর **ক্লিক করুন**। সাথে সাথে {panels_count}টি প্যানেল ছাদের ওপর বসে যাবে!")
+        
+        c1, c2 = st.columns(2)
+        base_lat = c1.number_input("Latitude", value=22.3569, format="%.6f", key="sat_lat")
+        base_lon = c2.number_input("Longitude", value=91.7832, format="%.6f", key="sat_lon")
+
+        sat_map = folium.Map(
+            location=[base_lat, base_lon], 
+            zoom_start=20, 
+            tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
+            attr='Google Satellite'
+        )
+
+        sat_data = st_folium(sat_map, height=500, width=900, key="sat_map_input")
+
+        click_lat, click_lon = base_lat, base_lon
+        is_clicked = False
+
+        if sat_data and sat_data.get("last_clicked"):
+            click_lat = sat_data["last_clicked"]["lat"]
+            click_lon = sat_data["last_clicked"]["lng"]
+            is_clicked = True
+
+        st.markdown("---")
+        st.subheader("📍 Rooftop Solar Placement View" if lang == "English" else "📍 ছাদে সোলার প্যানেল প্লেসমেন্ট ভিউ")
+        
+        viz_map = folium.Map(
+            location=[click_lat, click_lon], 
+            zoom_start=21, 
+            tiles='https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', 
+            attr='Google Satellite'
+        )
+
+        folium.Marker(
+            [click_lat, click_lon], 
+            tooltip="Selected Roof Location",
+            icon=folium.Icon(color="red", icon="home")
+        ).add_to(viz_map)
+
+        placed_count = 0
+        for r in range(rows):
+            for c in range(cols):
+                if placed_count < panels_count:
+                    p_lat = click_lat + ((r - rows/2) * 0.000022)
+                    p_lon = click_lon + ((c - cols/2) * 0.000022)
+                    
+                    bounds = [[p_lat, p_lon], [p_lat + 0.000018, p_lon + 0.000018]]
+                    
+                    folium.Rectangle(
+                        bounds=bounds,
+                        color="#38BDF8",
+                        fill=True,
+                        fill_color="#0284C7",
+                        fill_opacity=0.85,
+                        tooltip=f"Solar Panel #{placed_count + 1} (550W)"
+                    ).add_to(viz_map)
+                    placed_count += 1
+
+        st_folium(viz_map, height=500, width=900, key=f"viz_map_{click_lat}_{click_lon}")
+        
+        if is_clicked:
+            st.success(f"🎉 **{placed_count} Solar Panels placed at Coordinates:** Lat `{click_lat:.6f}`, Lon `{click_lon:.6f}`")
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #94A3B8;'>Designed by <b>Mohammad Sohel</b></div>", unsafe_allow_html=True)
