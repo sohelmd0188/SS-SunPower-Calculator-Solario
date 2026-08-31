@@ -9,7 +9,7 @@ import numpy as np
 import pydeck as pdk
 import folium
 from streamlit_folium import st_folium
-import graphviz
+
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -533,26 +533,29 @@ eng_tabs = st.tabs([
 # --- TAB 1: SLD ---
 with eng_tabs[0]:
     st.write("#### Dynamic Electrical SLD Layout" if lang == "English" else "#### ডায়নামিক ইলেকট্রিক্যাল SLD লেআউট")
-    dot = graphviz.Digraph(comment='Solar System SLD')
-    dot.attr(rankdir='LR', size='8,5')
     
-    dot.node('PV', f'PV Array\n({solar_kwp:.2f} kWp)', shape='box', style='filled', fillcolor='#FEF3C7')
-    dot.node('DCDB', 'DC Breaker & SPD\n(Protection)', shape='component', style='filled', fillcolor='#FDE68A')
-    dot.node('INV', f'Solar Inverter\n({max(3, round(inverter_kva))} KVA)', shape='box', style='filled', fillcolor='#93C5FD')
+    # Graphviz DOT syntax formatted directly as string
+    dot_code = f"""
+    digraph G {{
+        rankdir=LR;
+        node [fontname="sans-serif"];
+        
+        PV [label="PV Array\\n({solar_kwp:.2f} kWp)", shape=box, style=filled, fillcolor="#FEF3C7"];
+        DCDB [label="DC Breaker & SPD\\n(Protection)", shape=component, style=filled, fillcolor="#FDE68A"];
+        INV [label="Solar Inverter\\n({max(3, round(inverter_kva))} KVA)", shape=box, style=filled, fillcolor="#93C5FD"];
+        ACDB [label="AC Breaker & SPD\\n(Main Distribution)", shape=component, style=filled, fillcolor="#6EE7B7"];
+        LOAD [label="Connected Load\\n({running_watts} W)", shape=house, style=filled, fillcolor="#A7F3D0"];
+        
+        {"BAT [label=\"Battery Bank\\n(" + str(round(battery_ah)) + " Ah 48V)\", shape=cylinder, style=filled, fillcolor=\"#D1D5DB\"]; BAT -> INV [label=\"DC Bus\"];" if "With Battery" in system_type else ""}
+        
+        PV -> DCDB [label="DC Cable"];
+        DCDB -> INV [label="DC Input"];
+        INV -> ACDB [label="AC Output"];
+        ACDB -> LOAD [label="AC Line"];
+    }}
+    """
     
-    if "With Battery" in system_type:
-        dot.node('BAT', f'Battery Bank\n({battery_ah:.0f} Ah 48V)', shape='cylinder', style='filled', fillcolor='#D1D5DB')
-        dot.edge('BAT', 'INV', label='DC Bus')
-
-    dot.node('ACDB', 'AC Breaker & SPD\n(Main Distribution)', shape='component', style='filled', fillcolor='#6EE7B7')
-    dot.node('LOAD', f'Connected Load\n({running_watts} W)', shape='house', style='filled', fillcolor='#A7F3D0')
-    
-    dot.edge('PV', 'DCDB', label='DC Cable')
-    dot.edge('DCDB', 'INV', label='DC Input')
-    dot.edge('INV', 'ACDB', label='AC Output')
-    dot.edge('ACDB', 'LOAD', label='AC Line')
-    
-    st.graphviz_chart(dot)
+    st.graphviz_chart(dot_code)
     st.info("ℹ️ **BNBC Standard Notice:** All DC lines must include DC SPD (Surge Protection Device) and Isolator Switch before Inverter." if lang == "English" else "ℹ️ **BNBC মানদণ্ড সতর্কতা:** ইনভার্টারের পূর্বে প্রতিটি ডিসি লাইনে ডিসি এসপিডি (সুরক্ষা ডিভাইস) এবং আইসোলেটর সুইচ থাকা বাধ্যতামূলক।")
 
 # --- TAB 2: Cable Sizing & Voltage Drop ---
