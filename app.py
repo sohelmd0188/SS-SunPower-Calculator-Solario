@@ -133,21 +133,16 @@ st.markdown("---")
 # 3. Sidebar Inputs & Categorized Appliances
 # ==========================================
 
-# Categorized Default Appliances (Regular vs Heavy)
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
-        # Regular Loads (Use global average running hours)
         "Ceiling Fan (75W)": {"watt": 75, "qty": 5, "type": "regular", "hours": 8.0},
         "LED Light (15W)": {"watt": 15, "qty": 10, "type": "regular", "hours": 8.0},
         "Refrigerator (200W)": {"watt": 200, "qty": 1, "type": "regular", "hours": 8.0},
         "Smart TV (80W)": {"watt": 80, "qty": 1, "type": "regular", "hours": 8.0},
-        
-        # Heavy Loads (Use custom individual daily running hours)
         "Oven (1200W)": {"watt": 1200, "qty": 1, "type": "heavy", "hours": 1.0},
         "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1, "type": "heavy", "hours": 1.5}
     }
 
-# Extra appliances list for dropdown mapped with load type
 EXTRA_APPLIANCES = {
     "1.5 Ton Inverter AC (1500W)": {"watt": 1500, "type": "heavy", "default_hours": 6.0},
     "1 Ton Non-Inverter AC (1200W)": {"watt": 1200, "type": "heavy", "default_hours": 6.0},
@@ -163,7 +158,6 @@ EXTRA_APPLIANCES = {
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-# Option to add extra appliance
 st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
 selected_extra = st.sidebar.selectbox(
     "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
@@ -187,7 +181,6 @@ if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তাল�
 
 st.sidebar.markdown("---")
 
-# --- REGULAR LOADS SECTION ---
 st.sidebar.subheader("💡 Regular Loads (Standard)" if lang == "English" else "💡 সাধারণ লোড (নিয়মিত ব্যবহার)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     if app_data.get("type", "regular") == "regular":
@@ -209,7 +202,6 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
                 del st.session_state.appliance_list[app_name]
                 st.rerun()
 
-# --- HEAVY LOADS SECTION ---
 st.sidebar.markdown("---")
 st.sidebar.subheader("⚡ Heavy / High Power Loads" if lang == "English" else "⚡ হেভি ও হাই-ওয়াট লোড (আলাদা সময়)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
@@ -226,7 +218,6 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
             )
             st.session_state.appliance_list[app_name]["qty"] = new_qty
             
-            # Custom Usage Hours for Heavy Load
             custom_hours = st.number_input(
                 f"⏱️ {app_name} (Hours/Day)",
                 min_value=0.1,
@@ -239,7 +230,7 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
             
         with col_del:
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🗑️", key=f"del_{app_name}", help=f"Remove {app_name}"):
+            if st.button("🗑️", key=f"del_heavy_{app_name}", help=f"Remove {app_name}"):
                 del st.session_state.appliance_list[app_name]
                 st.rerun()
 
@@ -267,7 +258,6 @@ if "With Battery" in system_type:
 
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
 
-# Roof Area Calculator Component
 st.sidebar.markdown("---")
 st.sidebar.header("🏠 Roof Area Calculator" if lang == "English" else "🏠 ছাদের আয়তন দিয়ে হিসেব")
 roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=300)
@@ -288,14 +278,12 @@ for app_name, app_data in st.session_state.appliance_list.items():
     total_app_watt = watt * qty
     running_watts += total_app_watt
     
-    # Calculate daily Wh individually based on type
     if app_type == "heavy":
         used_hrs = app_data.get("hours", 1.0)
         daily_wh += total_app_watt * used_hrs
     else:
         daily_wh += total_app_watt * avg_running_hours
     
-    # Peak Surge Watt calculations
     if "Refrigerator" in app_name:
         surge_watts += total_app_watt * 2.5
     elif "Pump" in app_name:
@@ -877,7 +865,6 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
             </div>
         </div>
 
-        <!-- 2. Dynamically Generated AutoCAD Style Single Line Diagram (SLD) -->
         <div class="section-title">2. Single Line Diagram (SLD)</div>
         <div style="margin-top: 10px; text-align: center;">
             {dynamic_autocad_svg}
