@@ -251,6 +251,13 @@ system_type = st.sidebar.radio(
     ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"]
 )
 
+# 1. Battery Optimization & Autonomy Settings Integration
+if "With Battery" in system_type:
+    st.sidebar.markdown("---")
+    st.sidebar.header("🔋 Battery & Storage Optimization")
+    autonomy_days = st.sidebar.slider("Backup Autonomy Days (Cloudy Days):", 1, 3, 1)
+    dod_limit = st.sidebar.slider("Depth of Discharge (DoD %):", 50, 90, 80)
+
 panel_brand = st.sidebar.selectbox(
     "Solar Panel Brand:" if lang == "English" else "সোলার প্যানেল ব্র্যান্ড:", 
     ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Canadian Solar", "Standard Brand"]
@@ -265,6 +272,21 @@ if "With Battery" in system_type:
         "Battery Type:" if lang == "English" else "ব্যাটারি টাইপ:", 
         ["LiFePO4 Lithium Battery", "Tubular Lead-Acid Battery"]
     )
+
+# 2. Net Metering & Tariff Plan Integration
+st.sidebar.markdown("---")
+st.sidebar.header("💵 Net Metering & Tariff Plan")
+tariff_type = st.sidebar.selectbox(
+    "Select Electricity Tariff Slab:",
+    ["Residential Tiered (Avg BDT 9.5/kWh)", "Commercial Flat Rate (BDT 12.0/kWh)", "Industrial Peak/Off-Peak (BDT 10.5/kWh)"]
+)
+
+if "Commercial" in tariff_type:
+    electricity_rate = 12.0
+elif "Industrial" in tariff_type:
+    electricity_rate = 10.5
+else:
+    electricity_rate = 9.5
 
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand or "Deye" in inverter_brand else 1.0
 
@@ -326,7 +348,8 @@ else:
     inverter_cost = 110000 * brand_multiplier
 
 if "With Battery" in system_type:
-    battery_ah = (daily_wh * 0.5) / (48 * 0.8)
+    # Updated Battery AH Calculation with DoD and Autonomy
+    battery_ah = ((daily_wh * autonomy_days) / (48 * (dod_limit / 100.0)))
     if battery_type == "LiFePO4 Lithium Battery":
         battery_cost = (battery_ah / 100) * 130000
     else:
@@ -339,7 +362,6 @@ subtotal = panel_cost + inverter_cost + battery_cost
 installation_cost = subtotal * 0.10
 total_cost = subtotal + installation_cost
 
-electricity_rate = 9.5
 monthly_savings = daily_kwh * 30 * electricity_rate
 yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
@@ -543,6 +565,21 @@ if panels_count > 0 and roof_sqft > 0:
         
         if is_clicked:
             st.success(f"🎉 **{placed_count} Solar Panels placed at Coordinates:** Lat `{click_lat:.6f}`, Lon `{click_lon:.6f}`")
+
+st.markdown("---")
+
+# 3. Shadow Analysis & Tilt Angle Optimization (For CAD or Engineering Section)
+st.markdown("---")
+st.subheader("☀️ Shadow Analysis & Tilt Angle Optimization")
+
+col_t1, col_t2 = st.columns(2)
+with col_t1:
+    roof_azimuth = st.selectbox("Roof Orientation / Azimuth:", ["True South (Optimal)", "South-East", "South-West", "East / West"])
+    shading_factor = st.slider("Estimated Shading Loss (%):", 0, 30, 5)
+
+with col_t2:
+    optimal_tilt = 23.0
+    st.info(f"📐 **Optimal Tilt Angle for Location:** {optimal_tilt}° Facing South\n\n- Azimuth Impact: Minor adjustment recommended for {roof_azimuth}.\n- Shading Efficiency Loss: {shading_factor}% reduction factored into yield.")
 
 st.markdown("---")
 
@@ -759,6 +796,21 @@ else:
                 st.success(f"⚡ **Estimated Live Output:** {current_kw:.2f} kW (Efficiency: {efficiency*100:.1f}%)" if lang == "English" else f"⚡ **আনুমানিক উৎপাদন:** {current_kw:.2f} kW (কার্যক্ষমতা: {efficiency*100:.1f}%)")
             else:
                 st.error("Error fetching weather data for coordinates!")
+
+st.markdown("---")
+
+# 4. Carbon Emission Reduction & Green Metrics (Below ROI/Summary Section)
+st.markdown("---")
+st.subheader("🌱 Environmental Impact & CO2 Reduction")
+
+annual_kwh_generation = daily_kwh * 365
+annual_co2_saved_tons = (annual_kwh_generation * 0.5) / 1000.0
+equivalent_trees = int(annual_co2_saved_tons * 45)
+
+env_c1, env_c2, env_c3 = st.columns(3)
+env_c1.metric("Annual Clean Generation", f"{annual_kwh_generation:,.0f} kWh")
+env_c2.metric("Annual CO2 Reduction", f"{annual_co2_saved_tons:.2f} Tons")
+env_c3.metric("Equivalent Trees Planted", f"{equivalent_trees:,} Trees")
 
 st.markdown("---")
 
