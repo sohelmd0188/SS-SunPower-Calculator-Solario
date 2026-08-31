@@ -759,7 +759,7 @@ else:
 st.markdown("---")
 
 # ==========================================
-# 11. Professional Project Report Generation & Export
+# 10. Professional Project Report Generation & Export
 # ==========================================
 st.subheader("📄 Automated Project Proposal & Report Generator" if lang == "English" else "📄 স্বয়ংক্রিয় প্রজেক্ট প্রপোজাল ও রিপোর্ট জেনারেটর")
 st.caption("Generate an official PDF/Print-ready engineering proposal" if lang == "English" else "অফিসিয়াল পিডিএফ/প্রিন্ট উপযোগী ইঞ্জিনিয়ারিং প্রপোজাল তৈরি করুন")
@@ -865,7 +865,7 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
     )
 
 # ==========================================
-# 12. Footer Section
+# 11. Footer Section
 # ==========================================
 st.markdown("---")
 st.markdown(
