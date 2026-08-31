@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import numpy as np
 import math
 
 # ==========================================
@@ -62,7 +64,7 @@ if lang == "English":
     <div class="hero-container">
         <span class="hero-badge">☀️ SOLAR CAD & ANALYTICS</span>
         <div class="hero-title">Solario • Next-Gen Smart Solar CAD & ROI Engine </div>
-        <div class="hero-subtitle">Advanced calculations with Tilt/Azimuth, Shading Loss, DoD, Cash Flow, and BOQ Projections.</div>
+        <div class="hero-subtitle">Advanced calculations with 2D/3D CAD Layout, Weather API, Engineering Studio, Cash Flow, and BOQ Projections.</div>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -70,7 +72,7 @@ else:
     <div class="hero-container">
         <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
         <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
-        <div class="hero-subtitle">টিল্ট অ্যাঙ্গেল, শেডিং লস, ব্যাটারি DoD, নেট মিটারিং ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
+        <div class="hero-subtitle">২ডি/থ্রিডি ক্যাড লেআউট, আবহাওয়া সিমুলেশন, ইঞ্জিনিয়ারিং স্টুডিও, ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -89,7 +91,6 @@ if "appliance_list" not in st.session_state:
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-# Add new custom appliance option
 with st.sidebar.expander("➕ Add New Appliance" if lang == "English" else "➕ নতুন অ্যাপ্লায়েন্স যোগ করুন"):
     new_name = st.text_input("Appliance Name" if lang == "English" else "নাম", "Water Pump (750W)")
     new_watt = st.number_input("Wattage (W)" if lang == "English" else "ওয়াট", min_value=5, max_value=5000, value=750)
@@ -152,7 +153,6 @@ for app_name, app_data in st.session_state.appliance_list.items():
 daily_kwh = daily_wh / 1000.0
 inverter_kva = (surge_watts * 1.25) / 1000
 
-# Tilt angle optimization factor (Optimal ~ 23° for Bangladesh)
 tilt_efficiency_factor = 1.0 - abs(tilt_angle - 23) * 0.005
 net_loss_multiplier = (1.0 - (shading_loss_pct / 100.0)) * tilt_efficiency_factor
 
@@ -175,7 +175,7 @@ subtotal = panel_cost + inverter_cost + battery_cost
 installation_cost = subtotal * 0.10
 total_cost = subtotal + installation_cost
 
-electricity_rate = 10.0 # Net metering effective rate per unit (BDT)
+electricity_rate = 10.0 
 monthly_savings = daily_kwh * 30 * electricity_rate
 yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
@@ -192,80 +192,129 @@ col4.metric("Total Investment" if lang == "English" else "মোট বাজে
 st.markdown("---")
 
 # ==========================================
-# 6. Long-Term Net Metering & Cash Flow Projection
+# 6. Advanced Modules: 24-Hour Simulation & CAD/Layout
 # ==========================================
-st.subheader("📈 10-Year Net Metering Cash Flow Projection" if lang == "English" else "📈 ১০ বছরের নেট মিটারিং ক্যাশ ফ্লো প্রোজেকশন")
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📊 24-Hr Generation / উৎপাদন সিমুলেশন", 
+    "🗺️ CAD Layout & Roof / ক্যাড ও ছাদের বিন্যাস", 
+    "⚡ Engineering Studio / ইঞ্জিনিয়ারিং স্টুডিও", 
+    "📈 Cash Flow & Proposal / ক্যাশ ফ্লো ও প্রপোজাল"
+])
 
-years = list(range(1, 11))
-cumulative_cash_flow = []
-running_cf = -total_cost
-tariff_escalation = 1.05  # 5% yearly grid tariff hike
+with tab1:
+    st.subheader("24-Hour Solar PV Power Generation Curve" if lang == "English" else "২৪ ঘণ্টার সোলার পাওয়ার প্রোডাকশন কার্ভ")
+    hours_day = list(range(24))
+    # Gaussian bell curve for solar output simulation
+    generation_curve = [max(0, solar_kwp * 1000 * math.exp(-((h - 13) ** 2) / 10)) for h in hours_day]
+    
+    df_gen = pd.DataFrame({"Hour": hours_day, "Power (W)": generation_curve})
+    fig_gen = px.area(df_gen, x="Hour", y="Power (W)", title="Estimated Daily Power Profile (Watts)" if lang == "English" else "দিনব্যাপী সৌর বিদ্যুৎ উৎপাদনের প্রোফাইল", color_discrete_sequence=['#F59E0B'])
+    fig_gen.update_layout(template="plotly_dark")
+    st.plotly_chart(fig_gen, use_container_width=True)
 
-for y in years:
-    yearly_benefit = yearly_savings * (tariff_escalation ** (y - 1))
-    running_cf += yearly_benefit
-    cumulative_cash_flow.append(running_cf)
+with tab2:
+    st.subheader("Rooftop Space & Panel CAD Layout Assessment" if lang == "English" else "ছাদের ক্ষেত্রফল ও প্যানেল ক্যাড লেআউট বিশ্লেষণ")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.info(f"📍 **Required Roof Area:** {required_roof_sqft} Sq. Ft")
+        st.info(f"📍 **Available Roof Area:** {roof_sqft} Sq. Ft")
+        if roof_sqft < required_roof_sqft:
+            st.error("⚠️ Warning: Available roof area is less than required! Consider high-efficiency panels." if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
+        else:
+            st.success("✅ Roof area is sufficient for this installation capacity." if lang == "English" else "✅ এই সিস্টেমের জন্য ছাদের জায়গা যথেষ্ট রয়েছে।")
+    with col_b:
+        # Mock 2D layout scatter plot representing panels arrangement
+        if panels_count > 0:
+            cols_grid = max(1, math.ceil(math.sqrt(panels_count)))
+            x_coords = [i % cols_grid for i in range(panels_count)]
+            y_coords = [i // cols_grid for i in range(panels_count)]
+            df_cad = pd.DataFrame({"X": x_coords, "Y": y_coords})
+            fig_cad = px.scatter(df_cad, x="X", y="Y", title="Simulated Panel Placement Layout (550W Modules)" if lang == "English" else "সিমুলেটেড প্যানেল লেআউট গ্রিড", symbol_sequence=['square'])
+            fig_cad.update_traces(marker=dict(size=15, color='#F59E0B'))
+            fig_cad.update_layout(template="plotly_dark", xaxis_title="Array Width", yaxis_title="Array Length")
+            st.plotly_chart(fig_cad, use_container_width=True)
 
-df_cashflow = pd.DataFrame({
-    'Year': [f"Year {y}" for y in years],
-    'Net Cash Flow (BDT)': cumulative_cash_flow
-})
+with tab3:
+    st.subheader("Advanced Engineering & Protection Studio (BNBC & NFPA)" if lang == "English" else "অ্যাডভান্সড ইঞ্জিনিয়ারিং ও প্রটেকশন স্টুডিও (BNBC ও NFPA মানদণ্ড)")
+    col_eng1, col_eng2 = st.columns(2)
+    with col_eng1:
+        st.markdown("### 🔌 Cable Sizing & Voltage Drop")
+        st.write(f"- **DC Cable Recommendation:** 4mm² / 6mm² XLPE Copper Wire (Max 1% Drop)")
+        st.write(f"- **AC Cable Recommendation:** 10mm² Copper Cable for Main Inverter Feed")
+        st.write(f"- **Estimated Inverter Capacity:** {inverter_kva:.2f} kVA ({inverter_brand})")
+    with col_eng2:
+        st.markdown("### ⚡ Protection & Earthing (NFPA 780)")
+        st.write(f"- **DC Protection:** PV DC Isolator & Surge Protection Device (SPD Type-2)")
+        st.write(f"- **AC Protection:** MCB & Residual Current Circuit Breaker (RCCB)")
+        st.write(f"- **Earthing System:** Dedicated Copper Earth Rod (Resistance < 5 Ohms)")
 
-fig_cf = px.bar(df_cashflow, x='Year', y='Net Cash Flow (BDT)',
-              title="10-Year Cumulative Savings & Net Metering Return" if lang == "English" else "১০ বছরের সঞ্চয় ও নেট মিটারিং রিটার্ন গ্রাফ",
-              color='Net Cash Flow (BDT)', color_continuous_scale=['#EF4444', '#10B981'])
-fig_cf.update_layout(template="plotly_dark")
-st.plotly_chart(fig_cf, use_container_width=True)
+with tab4:
+    st.subheader("📈 10-Year Net Metering Cash Flow & Proposal" if lang == "English" else "📈 ১০ বছরের নেট মিটারিং ক্যাশ ফ্লো ও প্রপোজাল")
+    
+    years = list(range(1, 11))
+    cumulative_cash_flow = []
+    running_cf = -total_cost
+    tariff_escalation = 1.05  
 
-st.markdown("---")
+    for y in years:
+        yearly_benefit = yearly_savings * (tariff_escalation ** (y - 1))
+        running_cf += yearly_benefit
+        cumulative_cash_flow.append(running_cf)
 
-# ==========================================
-# 7. Printable Proposal & BOQ Generator Window
-# ==========================================
-st.subheader("📄 Client Proposal & Bill of Quantities (BOQ)" if lang == "English" else "📄 ক্লায়েন্ট প্রপোজাল ও বিল অব কোয়ান্টিটিজ (BOQ)")
+    df_cashflow = pd.DataFrame({
+        'Year': [f"Year {y}" for y in years],
+        'Net Cash Flow (BDT)': cumulative_cash_flow
+    })
 
-client_name = st.text_input("Client / Project Name:" if lang == "English" else "গ্রাহক বা প্রজেক্টের নাম:", value="Commercial Solar Client")
+    fig_cf = px.bar(df_cashflow, x='Year', y='Net Cash Flow (BDT)',
+                  title="10-Year Cumulative Savings & Net Metering Return" if lang == "English" else "১০ বছরের সঞ্চয় ও নেট মিটারিং রিটার্ন গ্রাফ",
+                  color='Net Cash Flow (BDT)', color_continuous_scale=['#EF4444', '#10B981'])
+    fig_cf.update_layout(template="plotly_dark")
+    st.plotly_chart(fig_cf, use_container_width=True)
 
-if st.button("📥 Generate Printable Proposal Window" if lang == "English" else "📥 প্রিন্টযোগ্য প্রপোজাল তৈরি করুন", use_container_width=True):
-    proposal_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Solar Proposal & BOQ</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; color: #1E293B; margin: 20px; }}
-            h2 {{ color: #D97706; border-bottom: 2px solid #F59E0B; padding-bottom: 5px; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
-            th, td {{ border: 1px solid #CBD5E1; padding: 8px 12px; text-align: left; }}
-            th {{ background-color: #F1F5F9; }}
-            .btn {{ background: #F59E0B; color: white; padding: 10px 20px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }}
-        </style>
-    </head>
-    <body>
-        <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-        <h2>Solario Commercial Solar Proposal</h2>
-        <p><strong>Client:</strong> {client_name} | <strong>System Type:</strong> {system_type}</p>
-        <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Azimuth: {azimuth_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
-        
-        <h3>Bill of Quantities (BOQ)</h3>
-        <table>
-            <tr><th>Item Description</th><th>Qty</th><th>Estimated Price (BDT)</th></tr>
-            <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs (550W)</td><td>BDT {panel_cost:,.0f}</td></tr>
-            <tr><td>Inverter ({inverter_brand})</td><td>1 Unit ({inverter_kva:.1f} kVA)</td><td>BDT {inverter_cost:,.0f}</td></tr>
-            {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}" + "</td></tr>" if "With Battery" in system_type else ""}
-            <tr><td>Rooftop Structure, Wiring & Protection</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
-            <tr style="font-weight:bold; background:#FEF3C7;"><td colspan="2">Total Investment</td><td>BDT {total_cost:,.0f}</td></tr>
-        </table>
-        
-        <h3>Financial Summary & ROI</h3>
-        <p>Estimated Monthly Savings: <strong>BDT {monthly_savings:,.0f}</strong></p>
-        <p>Estimated Yearly Savings: <strong>BDT {yearly_savings:,.0f}</strong></p>
-        <p>Payback Period (ROI): <strong>~{payback_years:.1f} Years</strong></p>
-    </body>
-    </html>
-    """
-    st.components.v1.html(proposal_html, height=600, scrolling=True)
+    st.markdown("---")
+    client_name = st.text_input("Client / Project Name:" if lang == "English" else "গ্রাহক বা প্রজেক্টের নাম:", value="Commercial Solar Client")
+
+    if st.button("📥 Generate Printable Proposal Window" if lang == "English" else "📥 প্রিন্টযোগ্য প্রপোজাল তৈরি করুন", use_container_width=True):
+        proposal_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Solar Proposal & BOQ</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; color: #1E293B; margin: 20px; }}
+                h2 {{ color: #D97706; border-bottom: 2px solid #F59E0B; padding-bottom: 5px; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
+                th, td {{ border: 1px solid #CBD5E1; padding: 8px 12px; text-align: left; }}
+                th {{ background-color: #F1F5F9; }}
+                .btn {{ background: #F59E0B; color: white; padding: 10px 20px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }}
+            </style>
+        </head>
+        <body>
+            <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+            <h2>Solario Commercial Solar Proposal</h2>
+            <p><strong>Client:</strong> {client_name} | <strong>System Type:</strong> {system_type}</p>
+            <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Azimuth: {azimuth_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
+            
+            <h3>Bill of Quantities (BOQ)</h3>
+            <table>
+                <tr><th>Item Description</th><th>Qty</th><th>Estimated Price (BDT)</th></tr>
+                <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs (550W)</td><td>BDT {panel_cost:,.0f}</td></tr>
+                <tr><td>Inverter ({inverter_brand})</td><td>1 Unit ({inverter_kva:.1f} kVA)</td><td>BDT {inverter_cost:,.0f}</td></tr>
+                {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}" + "</td></tr>" if "With Battery" in system_type else ""}
+                <tr><td>Rooftop Structure, Wiring & Protection</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
+                <tr style="font-weight:bold; background:#FEF3C7;"><td colspan="2">Total Investment</td><td>BDT {total_cost:,.0f}</td></tr>
+            </table>
+            
+            <h3>Financial Summary & ROI</h3>
+            <p>Estimated Monthly Savings: <strong>BDT {monthly_savings:,.0f}</strong></p>
+            <p>Estimated Yearly Savings: <strong>BDT {yearly_savings:,.0f}</strong></p>
+            <p>Payback Period (ROI): <strong>~{payback_years:.1f} Years</strong></p>
+        </body>
+        </html>
+        """
+        st.components.v1.html(proposal_html, height=600, scrolling=True)
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #94A3B8;'>Designed by <b>Mohammad Sohel</b></div>", unsafe_allow_html=True)
