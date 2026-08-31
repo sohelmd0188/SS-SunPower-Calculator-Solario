@@ -158,29 +158,6 @@ EXTRA_APPLIANCES = {
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
-selected_extra = st.sidebar.selectbox(
-    "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
-    options=list(EXTRA_APPLIANCES.keys()),
-    key="selected_extra_appliance"
-)
-
-if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তালিকায় যুক্ত করুন", use_container_width=True):
-    if selected_extra not in st.session_state.appliance_list:
-        info = EXTRA_APPLIANCES[selected_extra]
-        st.session_state.appliance_list[selected_extra] = {
-            "watt": info["watt"], 
-            "qty": 1, 
-            "type": info["type"],
-            "hours": info["default_hours"]
-        }
-        st.sidebar.success(f"Added {selected_extra}!")
-        st.rerun()
-    else:
-        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
-
-st.sidebar.markdown("---")
-
 st.sidebar.subheader("💡 Regular Loads (Standard)" if lang == "English" else "💡 সাধারণ লোড (নিয়মিত ব্যবহার)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     if app_data.get("type", "regular") == "regular":
@@ -232,7 +209,30 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🗑️", key=f"del_heavy_{app_name}", help=f"Remove {app_name}"):
                 del st.session_state.appliance_list[app_name]
-                st.rerun()
+                st.rerun()st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
+selected_extra = st.sidebar.selectbox(
+    "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
+    options=list(EXTRA_APPLIANCES.keys()),
+    key="selected_extra_appliance"
+)
+
+if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তালিকায় যুক্ত করুন", use_container_width=True):
+    if selected_extra not in st.session_state.appliance_list:
+        info = EXTRA_APPLIANCES[selected_extra]
+        st.session_state.appliance_list[selected_extra] = {
+            "watt": info["watt"], 
+            "qty": 1, 
+            "type": info["type"],
+            "hours": info["default_hours"]
+        }
+        st.sidebar.success(f"Added {selected_extra}!")
+        st.rerun()
+    else:
+        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
+
+st.sidebar.markdown("---")
+
+
 
 st.sidebar.markdown("---")
 st.sidebar.header("⏱️ 2. Regular Load Usage" if lang == "English" else "⏱️ ২. সাধারণ লোড ব্যবহারের সময়")
