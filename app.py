@@ -1,14 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import requests
 import math
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import numpy as np
-import pydeck as pdk
-import folium
-from streamlit_folium import st_folium
 
 # ==========================================
 # 1. Page Configuration & Custom UI Styling
@@ -59,8 +52,6 @@ div[data-testid="stMetricValue"] {
 </style>
 """, unsafe_allow_html=True)
 
-API_KEY = "f95798b74fd5bd53dd615f40cdf88312"
-
 # ==========================================
 # 2. Header Section & Language Option
 # ==========================================
@@ -79,14 +70,14 @@ else:
     <div class="hero-container">
         <span class="hero-badge">☀️ সোলার ক্যাড ও অ্যানালিটিক্স</span>
         <div class="hero-title">স্মার্ট বাণিজ্যিক সোলার ক্যালকুলেটর ও ড্যাশবোর্ড</div>
-        <div class="hero-subtitle">টিল্ট অ্যাঙ্গেল, শেডিং লস, ব্যাটারি DoD, নেট মিটারিং ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত আপডেটকৃত সিস্টেম।</div>
+        <div class="hero-subtitle">টিল্ট অ্যাঙ্গেল, শেডিং লস, ব্যাটারি DoD, নেট মিটারিং ক্যাশ ফ্লো এবং প্রফেশনাল প্রপোজাল সমেত সম্পূর্ণ সিস্টেম।</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("---")
 
 # ==========================================
-# 3. Sidebar Inputs & Enhanced Parameters
+# 3. Sidebar Inputs & Engineering Parameters
 # ==========================================
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
@@ -97,6 +88,18 @@ if "appliance_list" not in st.session_state:
     }
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
+
+# Add new custom appliance option
+with st.sidebar.expander("➕ Add New Appliance" if lang == "English" else "➕ নতুন অ্যাপ্লায়েন্স যোগ করুন"):
+    new_name = st.text_input("Appliance Name" if lang == "English" else "নাম", "Water Pump (750W)")
+    new_watt = st.number_input("Wattage (W)" if lang == "English" else "ওয়াট", min_value=5, max_value=5000, value=750)
+    new_qty_input = st.number_input("Quantity" if lang == "English" else "পরিমাণ", min_value=1, max_value=20, value=1)
+    new_type = st.selectbox("Usage Type" if lang == "English" else "ব্যবহারের ধরন", ["regular", "heavy"])
+    new_hours = st.slider("Daily Usage Hours" if lang == "English" else "দৈনিক ব্যবহারের ঘণ্টা", 1.0, 24.0, 4.0)
+    if st.button("Add to List" if lang == "English" else "তালিকায় যোগ করুন"):
+        st.session_state.appliance_list[new_name] = {"watt": new_watt, "qty": new_qty_input, "type": new_type, "hours": new_hours}
+        st.rerun()
+
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     col_app, col_del = st.sidebar.columns([4, 1])
     with col_app:
@@ -126,11 +129,11 @@ if "With Battery" in system_type:
 else:
     autonomy_hours = 0
 
-roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=400)
+roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=800)
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand else 1.0
 
 # ==========================================
-# 4. Core Calculations with Enhanced Factors
+# 4. Core Calculations with Detailed Factors
 # ==========================================
 running_watts = 0
 surge_watts = 0
@@ -144,7 +147,7 @@ for app_name, app_data in st.session_state.appliance_list.items():
     running_watts += total_app_watt
     used_hrs = app_data.get("hours", 6.0) if app_type == "heavy" else 8.0
     daily_wh += total_app_watt * used_hrs
-    surge_watts += total_app_watt * (2.0 if "AC" in app_name or "Refrigerator" in app_name else 1.0)
+    surge_watts += total_app_watt * (2.0 if "AC" in app_name or "Refrigerator" in app_name or "Pump" in app_name else 1.0)
 
 daily_kwh = daily_wh / 1000.0
 inverter_kva = (surge_watts * 1.25) / 1000
@@ -172,7 +175,7 @@ subtotal = panel_cost + inverter_cost + battery_cost
 installation_cost = subtotal * 0.10
 total_cost = subtotal + installation_cost
 
-electricity_rate = 10.0 # Net metering effective rate
+electricity_rate = 10.0 # Net metering effective rate per unit (BDT)
 monthly_savings = daily_kwh * 30 * electricity_rate
 yearly_savings = monthly_savings * 12
 payback_years = total_cost / yearly_savings if yearly_savings > 0 else 0
@@ -243,20 +246,21 @@ if st.button("📥 Generate Printable Proposal Window" if lang == "English" else
         <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
         <h2>Solario Commercial Solar Proposal</h2>
         <p><strong>Client:</strong> {client_name} | <strong>System Type:</strong> {system_type}</p>
-        <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
+        <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Azimuth: {azimuth_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
         
         <h3>Bill of Quantities (BOQ)</h3>
         <table>
             <tr><th>Item Description</th><th>Qty</th><th>Estimated Price (BDT)</th></tr>
-            <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs</td><td>BDT {panel_cost:,.0f}</td></tr>
-            <tr><td>Inverter ({inverter_brand})</td><td>1 Unit</td><td>BDT {inverter_cost:,.0f}</td></tr>
-            {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set</td><td>BDT " + f"{battery_cost:,.0f}" + "</td></tr>" if "With Battery" in system_type else ""}
-            <tr><td>Rooftop Structure & Wiring</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
+            <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs (550W)</td><td>BDT {panel_cost:,.0f}</td></tr>
+            <tr><td>Inverter ({inverter_brand})</td><td>1 Unit ({inverter_kva:.1f} kVA)</td><td>BDT {inverter_cost:,.0f}</td></tr>
+            {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}" + "</td></tr>" if "With Battery" in system_type else ""}
+            <tr><td>Rooftop Structure, Wiring & Protection</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
             <tr style="font-weight:bold; background:#FEF3C7;"><td colspan="2">Total Investment</td><td>BDT {total_cost:,.0f}</td></tr>
         </table>
         
-        <h3>Financial Summary</h3>
+        <h3>Financial Summary & ROI</h3>
         <p>Estimated Monthly Savings: <strong>BDT {monthly_savings:,.0f}</strong></p>
+        <p>Estimated Yearly Savings: <strong>BDT {yearly_savings:,.0f}</strong></p>
         <p>Payback Period (ROI): <strong>~{payback_years:.1f} Years</strong></p>
     </body>
     </html>
