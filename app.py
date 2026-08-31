@@ -91,6 +91,7 @@ if "appliance_list" not in st.session_state:
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
+# Add New Appliance Option
 with st.sidebar.expander("➕ Add New Appliance" if lang == "English" else "➕ নতুন অ্যাপ্লায়েন্স যোগ করুন"):
     new_name = st.text_input("Appliance Name" if lang == "English" else "নাম", "Water Pump (750W)")
     new_watt = st.number_input("Wattage (W)" if lang == "English" else "ওয়াট", min_value=5, max_value=5000, value=750)
@@ -101,18 +102,23 @@ with st.sidebar.expander("➕ Add New Appliance" if lang == "English" else "➕ 
         st.session_state.appliance_list[new_name] = {"watt": new_watt, "qty": new_qty_input, "type": new_type, "hours": new_hours}
         st.rerun()
 
+# Render existing appliances with Quantity, Type, and Hour Control
 for app_name, app_data in list(st.session_state.appliance_list.items()):
-    col_app, col_del = st.sidebar.columns([4, 1])
-    with col_app:
-        new_qty = st.number_input(f"{app_name}", min_value=0, max_value=50, value=app_data["qty"], step=1, key=f"qty_{app_name}")
+    st.sidebar.markdown(f"**{app_name}**")
+    col_q, col_h, col_del = st.sidebar.columns([2, 2, 1])
+    with col_q:
+        new_qty = st.number_input("Qty", min_value=0, max_value=50, value=app_data["qty"], step=1, key=f"qty_{app_name}")
         st.session_state.appliance_list[app_name]["qty"] = new_qty
+    with col_h:
+        new_hrs = st.number_input("Hrs", min_value=0.5, max_value=24.0, value=float(app_data.get("hours", 8.0)), step=0.5, key=f"hrs_{app_name}")
+        st.session_state.appliance_list[app_name]["hours"] = new_hrs
     with col_del:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🗑️", key=f"del_{app_name}"):
             del st.session_state.appliance_list[app_name]
             st.rerun()
+    st.sidebar.markdown("---")
 
-st.sidebar.markdown("---")
 st.sidebar.header("📐 2. Tilt & Azimuth & Losses" if lang == "English" else "২. টিল্ট, আজিমুথ ও লস ফ্যাক্টর")
 tilt_angle = st.sidebar.slider("Panel Tilt Angle (Degrees):" if lang == "English" else "প্যানেল টিল্ট অ্যাঙ্গেল (ডিগ্রী):", 0, 45, 23)
 azimuth_angle = st.sidebar.slider("Azimuth Angle (South = 0°):" if lang == "English" else "আজিমুথ অ্যাঙ্গেল (দক্ষিণ = ০°):", -90, 90, 0)
@@ -146,7 +152,7 @@ for app_name, app_data in st.session_state.appliance_list.items():
     app_type = app_data.get("type", "regular")
     total_app_watt = watt * qty
     running_watts += total_app_watt
-    used_hrs = app_data.get("hours", 6.0) if app_type == "heavy" else 8.0
+    used_hrs = app_data.get("hours", 6.0)
     daily_wh += total_app_watt * used_hrs
     surge_watts += total_app_watt * (2.0 if "AC" in app_name or "Refrigerator" in app_name or "Pump" in app_name else 1.0)
 
@@ -204,7 +210,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.subheader("24-Hour Solar PV Power Generation Curve" if lang == "English" else "২৪ ঘণ্টার সোলার পাওয়ার প্রোডাকশন কার্ভ")
     hours_day = list(range(24))
-    # Gaussian bell curve for solar output simulation
     generation_curve = [max(0, solar_kwp * 1000 * math.exp(-((h - 13) ** 2) / 10)) for h in hours_day]
     
     df_gen = pd.DataFrame({"Hour": hours_day, "Power (W)": generation_curve})
@@ -219,11 +224,10 @@ with tab2:
         st.info(f"📍 **Required Roof Area:** {required_roof_sqft} Sq. Ft")
         st.info(f"📍 **Available Roof Area:** {roof_sqft} Sq. Ft")
         if roof_sqft < required_roof_sqft:
-            st.error("⚠️ Warning: Available roof area is less than required! Consider high-efficiency panels." if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
+            st.error("⚠️ Warning: Available roof area is less than required!" if lang == "English" else "⚠️ সতর্কবার্তা: উপলব্ধ ছাদের জায়গা প্রয়োজনের তুলনায় কম!")
         else:
             st.success("✅ Roof area is sufficient for this installation capacity." if lang == "English" else "✅ এই সিস্টেমের জন্য ছাদের জায়গা যথেষ্ট রয়েছে।")
     with col_b:
-        # Mock 2D layout scatter plot representing panels arrangement
         if panels_count > 0:
             cols_grid = max(1, math.ceil(math.sqrt(panels_count)))
             x_coords = [i % cols_grid for i in range(panels_count)]
@@ -302,7 +306,7 @@ with tab4:
                 <tr><th>Item Description</th><th>Qty</th><th>Estimated Price (BDT)</th></tr>
                 <tr><td>Solar PV Modules ({panel_brand})</td><td>{panels_count} Pcs (550W)</td><td>BDT {panel_cost:,.0f}</td></tr>
                 <tr><td>Inverter ({inverter_brand})</td><td>1 Unit ({inverter_kva:.1f} kVA)</td><td>BDT {inverter_cost:,.0f}</td></tr>
-                {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}" + "</td></tr>" if "With Battery" in system_type else ""}
+                {"<tr><td>Battery Bank (" + battery_type + ")</td><td>1 Set (" + f"{battery_ah:.1f}" + " Ah)</td><td>BDT " + f"{battery_cost:,.0f}</td></tr>" if "With Battery" in system_type else ""}
                 <tr><td>Rooftop Structure, Wiring & Protection</td><td>1 Set</td><td>BDT {installation_cost:,.0f}</td></tr>
                 <tr style="font-weight:bold; background:#FEF3C7;"><td colspan="2">Total Investment</td><td>BDT {total_cost:,.0f}</td></tr>
             </table>
