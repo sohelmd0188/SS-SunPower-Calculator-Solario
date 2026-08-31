@@ -95,9 +95,14 @@ EXTRA_APPLIANCES = {
     "1.5 Ton Inverter AC (1500W)": {"watt": 1500, "type": "heavy", "default_hours": 6.0},
     "1 Ton Non-Inverter AC (1200W)": {"watt": 1200, "type": "heavy", "default_hours": 6.0},
     "2 Ton AC (2200W)": {"watt": 2200, "type": "heavy", "default_hours": 6.0},
+    "0.5 HP Water Motor / Pump (375W)": {"watt": 375, "type": "heavy", "default_hours": 1.0},
+    "1 HP Water Motor / Pump (750W)": {"watt": 750, "type": "heavy", "default_hours": 1.0},
+    "1.5 HP Submersible Pump (1100W)": {"watt": 1100, "type": "heavy", "default_hours": 1.5},
+    "2 HP Deep Tubewell Motor (1500W)": {"watt": 1500, "type": "heavy", "default_hours": 1.5},
+    "Microwave Oven (1200W)": {"watt": 1200, "type": "heavy", "default_hours": 0.5},
+    "Electric Oven / Baking Oven (2000W)": {"watt": 2000, "type": "heavy", "default_hours": 1.0},
     "Washing Machine (500W)": {"watt": 500, "type": "heavy", "default_hours": 1.0},
     "Geyser / Water Heater (2000W)": {"watt": 2000, "type": "heavy", "default_hours": 1.0},
-    "Microwave Oven (1000W)": {"watt": 1000, "type": "heavy", "default_hours": 0.5},
     "Computer / Desktop (250W)": {"watt": 250, "type": "regular", "default_hours": 8.0},
     "Laptop Charger (65W)": {"watt": 65, "type": "regular", "default_hours": 8.0},
     "Iron Box (1000W)": {"watt": 1000, "type": "heavy", "default_hours": 0.5},
@@ -230,7 +235,7 @@ for app_name, app_data in st.session_state.appliance_list.items():
         used_hrs = app_data.get("hours", 1.0)
         
     daily_wh += total_app_watt * used_hrs
-    surge_watts += total_app_watt * (2.0 if "AC" in app_name or "Refrigerator" in app_name or "Pump" in app_name else 1.0)
+    surge_watts += total_app_watt * (3.0 if "Motor" in app_name or "Pump" in app_name else (2.0 if "AC" in app_name or "Refrigerator" in app_name else 1.0))
 
 daily_kwh = daily_wh / 1000.0
 inverter_kva = (surge_watts * 1.25) / 1000
