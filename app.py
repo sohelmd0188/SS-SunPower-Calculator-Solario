@@ -901,7 +901,7 @@ if st.button("📥 Generate & View Official Proposal Report" if lang == "English
             <tr><td>Solar Inverter ({max(3, round(inverter_kva))} KVA)</td><td>1 Unit</td><td>BDT {inverter_cost:,.0f}</td></tr>
             <tr><td>Solar Cable & Wiring</td><td>30 Meters</td><td>BDT 5,400</td></tr>
             <tr><td>Rooftop Structure</td><td>1 Set</td><td>BDT {panels_count * 2500:,.0f}</td></tr>
-            <tr><td>DC/AC Distribution & Breakers</td><td>1 Set</td><td>BDT 18,000</td></tr>
+            <tr><td>DC/AC Distribution & Breakers</td><td>1 State</td><td>BDT 18,000</td></tr>
             <tr><td>Earthing & Protections</td><td>2 Sets</td><td>BDT 14,000</td></tr>
             <tr><td>Installation Charges</td><td>1 Job</td><td>BDT {installation_cost:,.0f}</td></tr>
             <tr class="total-row"><td colspan="2">Total Budget</td><td>BDT {df_boq_table['Est. Price (BDT)'].sum():,.0f}</td></tr>
