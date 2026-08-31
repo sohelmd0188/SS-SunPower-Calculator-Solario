@@ -79,53 +79,122 @@ else:
 st.markdown("---")
 
 # ==========================================
-# 3. Sidebar Inputs & Engineering Parameters
+# 3. Sidebar Inputs & Categorized Appliances
 # ==========================================
 if "appliance_list" not in st.session_state:
     st.session_state.appliance_list = {
         "Ceiling Fan (75W)": {"watt": 75, "qty": 5, "type": "regular", "hours": 8.0},
         "LED Light (15W)": {"watt": 15, "qty": 10, "type": "regular", "hours": 8.0},
         "Refrigerator (200W)": {"watt": 200, "qty": 1, "type": "regular", "hours": 8.0},
-        "1.5 Ton Inverter AC (1500W)": {"watt": 1500, "qty": 1, "type": "heavy", "hours": 6.0}
+        "Smart TV (80W)": {"watt": 80, "qty": 1, "type": "regular", "hours": 8.0},
+        "Oven (1200W)": {"watt": 1200, "qty": 1, "type": "heavy", "hours": 1.0},
+        "1 HP Submersible Pump (750W)": {"watt": 750, "qty": 1, "type": "heavy", "hours": 1.5}
     }
+
+EXTRA_APPLIANCES = {
+    "1.5 Ton Inverter AC (1500W)": {"watt": 1500, "type": "heavy", "default_hours": 6.0},
+    "1 Ton Non-Inverter AC (1200W)": {"watt": 1200, "type": "heavy", "default_hours": 6.0},
+    "2 Ton AC (2200W)": {"watt": 2200, "type": "heavy", "default_hours": 6.0},
+    "Washing Machine (500W)": {"watt": 500, "type": "heavy", "default_hours": 1.0},
+    "Geyser / Water Heater (2000W)": {"watt": 2000, "type": "heavy", "default_hours": 1.0},
+    "Microwave Oven (1000W)": {"watt": 1000, "type": "heavy", "default_hours": 0.5},
+    "Computer / Desktop (250W)": {"watt": 250, "type": "regular", "default_hours": 8.0},
+    "Laptop Charger (65W)": {"watt": 65, "type": "regular", "default_hours": 8.0},
+    "Iron Box (1000W)": {"watt": 1000, "type": "heavy", "default_hours": 0.5},
+    "Induction Cooker (1800W)": {"watt": 1800, "type": "heavy", "default_hours": 2.0}
+}
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
-# Add New Appliance Option
-with st.sidebar.expander("➕ Add New Appliance" if lang == "English" else "➕ নতুন অ্যাপ্লায়েন্স যোগ করুন"):
-    new_name = st.text_input("Appliance Name" if lang == "English" else "নাম", "Water Pump (750W)")
-    new_watt = st.number_input("Wattage (W)" if lang == "English" else "ওয়াট", min_value=5, max_value=5000, value=750)
-    new_qty_input = st.number_input("Quantity" if lang == "English" else "পরিমাণ", min_value=1, max_value=20, value=1)
-    new_type = st.selectbox("Usage Type" if lang == "English" else "ব্যবহারের ধরন", ["regular", "heavy"])
-    new_hours = st.slider("Daily Usage Hours" if lang == "English" else "দৈনিক ব্যবহারের ঘণ্টা", 1.0, 24.0, 4.0)
-    if st.button("Add to List" if lang == "English" else "তালিকায় যোগ করুন"):
-        st.session_state.appliance_list[new_name] = {"watt": new_watt, "qty": new_qty_input, "type": new_type, "hours": new_hours}
-        st.rerun()
-
-# Render existing appliances with Quantity, Type, and Hour Control
+# Regular Loads Section
+st.sidebar.subheader("💡 Regular Loads (Standard)" if lang == "English" else "💡 সাধারণ লোড (নিয়মিত ব্যবহার)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
-    st.sidebar.markdown(f"**{app_name}**")
-    col_q, col_h, col_del = st.sidebar.columns([2, 2, 1])
-    with col_q:
-        new_qty = st.number_input("Qty", min_value=0, max_value=50, value=app_data["qty"], step=1, key=f"qty_{app_name}")
-        st.session_state.appliance_list[app_name]["qty"] = new_qty
-    with col_h:
-        new_hrs = st.number_input("Hrs", min_value=0.5, max_value=24.0, value=float(app_data.get("hours", 8.0)), step=0.5, key=f"hrs_{app_name}")
-        st.session_state.appliance_list[app_name]["hours"] = new_hrs
-    with col_del:
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🗑️", key=f"del_{app_name}"):
-            del st.session_state.appliance_list[app_name]
-            st.rerun()
-    st.sidebar.markdown("---")
-
-st.sidebar.header("📐 2. Tilt & Azimuth & Losses" if lang == "English" else "২. টিল্ট, আজিমুথ ও লস ফ্যাক্টর")
-tilt_angle = st.sidebar.slider("Panel Tilt Angle (Degrees):" if lang == "English" else "প্যানেল টিল্ট অ্যাঙ্গেল (ডিগ্রী):", 0, 45, 23)
-azimuth_angle = st.sidebar.slider("Azimuth Angle (South = 0°):" if lang == "English" else "আজিমুথ অ্যাঙ্গেল (দক্ষিণ = ০°):", -90, 90, 0)
-shading_loss_pct = st.sidebar.slider("Shading & Dust Loss (%):" if lang == "English" else "ছায়া ও ধূলিমলিনতা লস (%):", 0, 30, 15)
+    if app_data.get("type", "regular") == "regular":
+        col_app, col_del = st.sidebar.columns([4, 1])
+        with col_app:
+            new_qty = st.number_input(
+                f"{app_name}",
+                min_value=0,
+                max_value=100,
+                value=app_data["qty"],
+                step=1,
+                key=f"qty_{app_name}"
+            )
+            st.session_state.appliance_list[app_name]["qty"] = new_qty
+            
+        with col_del:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🗑️", key=f"del_{app_name}", help=f"Remove {app_name}"):
+                del st.session_state.appliance_list[app_name]
+                st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.header("⚙️ 3. System & Battery Engineering" if lang == "English" else "৩. সিস্টেম ও ব্যাটারি ইঞ্জিনিয়ারিং")
+
+# Heavy Loads Section
+st.sidebar.subheader("⚡ Heavy / High Power Loads" if lang == "English" else "⚡ হেভি ও হাই-ওয়াট লোড (আলাদা সময়)")
+for app_name, app_data in list(st.session_state.appliance_list.items()):
+    if app_data.get("type") == "heavy":
+        col_app, col_del = st.sidebar.columns([4, 1])
+        with col_app:
+            new_qty = st.number_input(
+                f"{app_name} (Qty)",
+                min_value=0,
+                max_value=50,
+                value=app_data["qty"],
+                step=1,
+                key=f"qty_{app_name}"
+            )
+            st.session_state.appliance_list[app_name]["qty"] = new_qty
+            
+            custom_hours = st.number_input(
+                f"⏱️ {app_name} (Hours/Day)",
+                min_value=0.1,
+                max_value=24.0,
+                value=float(app_data.get("hours", 1.0)),
+                step=0.5,
+                key=f"hrs_{app_name}"
+            )
+            st.session_state.appliance_list[app_name]["hours"] = custom_hours
+            
+        with col_del:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🗑️", key=f"del_heavy_{app_name}", help=f"Remove {app_name}"):
+                del st.session_state.appliance_list[app_name]
+                st.rerun()
+
+st.sidebar.markdown("---")
+
+# Add Extra Appliance Section (Placed right after Heavy Loads)
+st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
+selected_extra = st.sidebar.selectbox(
+    "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
+    options=list(EXTRA_APPLIANCES.keys()),
+    key="selected_extra_appliance"
+)
+
+if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তালিকায় যুক্ত করুন", use_container_width=True):
+    if selected_extra not in st.session_state.appliance_list:
+        info = EXTRA_APPLIANCES[selected_extra]
+        st.session_state.appliance_list[selected_extra] = {
+            "watt": info["watt"], 
+            "qty": 1, 
+            "type": info["type"],
+            "hours": info["default_hours"]
+        }
+        st.sidebar.success(f"Added {selected_extra}!")
+        st.rerun()
+    else:
+        st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
+
+st.sidebar.markdown("---")
+st.sidebar.header("⏱️ 2. Regular Load Usage" if lang == "English" else "⏱️ ২. সাধারণ লোড ব্যবহারের সময়")
+avg_running_hours = st.sidebar.slider(
+    "Avg Daily Hours for Regular Loads" if lang == "English" else "সাধারণ লোড সমূহের দৈনিক গড় সময় (ঘণ্টা)", 
+    1, 24, 8
+)
+
+st.sidebar.markdown("---")
+st.sidebar.header("⚙️ 3. Equipment & Brand Selection" if lang == "English" else "⚙️ ৩. যন্ত্রপাতি ও ব্র্যান্ড নির্বাচন")
 system_type = st.sidebar.radio("Select System Type:" if lang == "English" else "সিস্টেম টাইপ:", ["Hybrid / Off-Grid (With Battery)", "On-Grid (Without Battery)"])
 panel_brand = st.sidebar.selectbox("Solar Panel Brand:" if lang == "English" else "প্যানেল ব্র্যান্ড:", ["Longi Solar (Tier-1)", "Jinko Solar (Tier-1)", "Standard"])
 inverter_brand = st.sidebar.selectbox("Inverter Brand:" if lang == "English" else "ইনভার্টার ব্র্যান্ড:", ["Growatt", "Deye", "Huawei"])
@@ -136,6 +205,8 @@ if "With Battery" in system_type:
 else:
     autonomy_hours = 0
 
+tilt_angle = st.sidebar.slider("Panel Tilt Angle (Degrees):" if lang == "English" else "প্যানেল টিল্ট অ্যাঙ্গেল (ডিগ্রী):", 0, 45, 23)
+shading_loss_pct = st.sidebar.slider("Shading & Dust Loss (%):" if lang == "English" else "ছায়া ও ধূলিমলিনতা লস (%):", 0, 30, 15)
 roof_sqft = st.sidebar.number_input("Available Roof Area (Sq. Ft):" if lang == "English" else "খালি ছাদের আয়তন (বর্গফুট):", min_value=0, value=800)
 brand_multiplier = 1.15 if "Tier-1" in panel_brand or "Huawei" in inverter_brand else 1.0
 
@@ -152,7 +223,12 @@ for app_name, app_data in st.session_state.appliance_list.items():
     app_type = app_data.get("type", "regular")
     total_app_watt = watt * qty
     running_watts += total_app_watt
-    used_hrs = app_data.get("hours", 6.0)
+    
+    if app_type == "regular":
+        used_hrs = avg_running_hours
+    else:
+        used_hrs = app_data.get("hours", 1.0)
+        
     daily_wh += total_app_watt * used_hrs
     surge_watts += total_app_watt * (2.0 if "AC" in app_name or "Refrigerator" in app_name or "Pump" in app_name else 1.0)
 
@@ -299,7 +375,7 @@ with tab4:
             <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
             <h2>Solario Commercial Solar Proposal</h2>
             <p><strong>Client:</strong> {client_name} | <strong>System Type:</strong> {system_type}</p>
-            <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Azimuth: {azimuth_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
+            <p><strong>Design Specs:</strong> Tilt: {tilt_angle}° | Shading Loss: {shading_loss_pct}% | Backup: {autonomy_hours} Hours</p>
             
             <h3>Bill of Quantities (BOQ)</h3>
             <table>
