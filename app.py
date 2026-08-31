@@ -158,6 +158,7 @@ EXTRA_APPLIANCES = {
 
 st.sidebar.header("🔌 1. Appliance Quantities & Load" if lang == "English" else "🔌 ১. সরঞ্জামের পরিমাণ ও লোড")
 
+# Regular Loads Section
 st.sidebar.subheader("💡 Regular Loads (Standard)" if lang == "English" else "💡 সাধারণ লোড (নিয়মিত ব্যবহার)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     if app_data.get("type", "regular") == "regular":
@@ -180,6 +181,8 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
                 st.rerun()
 
 st.sidebar.markdown("---")
+
+# Heavy Loads Section
 st.sidebar.subheader("⚡ Heavy / High Power Loads" if lang == "English" else "⚡ হেভি ও হাই-ওয়াট লোড (আলাদা সময়)")
 for app_name, app_data in list(st.session_state.appliance_list.items()):
     if app_data.get("type") == "heavy":
@@ -209,7 +212,12 @@ for app_name, app_data in list(st.session_state.appliance_list.items()):
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🗑️", key=f"del_heavy_{app_name}", help=f"Remove {app_name}"):
                 del st.session_state.appliance_list[app_name]
-                st.rerun()st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
+                st.rerun()
+
+st.sidebar.markdown("---")
+
+# Add Extra Appliance Section (Placed right after Heavy Loads)
+st.sidebar.subheader("➕ Add Extra Appliance" if lang == "English" else "➕ অতিরিক্ত ডিভাইস যুক্ত করুন")
 selected_extra = st.sidebar.selectbox(
     "Select Appliance:" if lang == "English" else "ডিভাইস বেছে নিন:",
     options=list(EXTRA_APPLIANCES.keys()),
@@ -229,10 +237,6 @@ if st.sidebar.button("➕ Add to List" if lang == "English" else "➕ তাল�
         st.rerun()
     else:
         st.sidebar.warning("Already in your list!" if lang == "English" else "ইতিমধ্যে তালিকায় আছে!")
-
-st.sidebar.markdown("---")
-
-
 
 st.sidebar.markdown("---")
 st.sidebar.header("⏱️ 2. Regular Load Usage" if lang == "English" else "⏱️ ২. সাধারণ লোড ব্যবহারের সময়")
